@@ -48,14 +48,16 @@ bool ASApp::OnInit()
 
 	audioSink = new AudioSink();
 	audioCapture = new AudioCapture();
-
-	//audioCapture->GetStream(audioSink);
+	audioCapture->OpenDevice(audioSink);
 
 	return true;
 }
 
 ASApp::~ASApp()
 {
+	if (audioCapture->isActive())
+		audioCapture->Stop();
+
 	if (audioSink != nullptr)
 		delete audioSink;
 	if (audioCapture != nullptr)

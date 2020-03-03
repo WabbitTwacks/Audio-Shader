@@ -4,6 +4,7 @@
 #include <WaaSApi.h>
 #include <mmdeviceapi.h>
 #include <Audioclient.h>
+#include <thread>
 
 #include "AudioSink.h"
 
@@ -18,11 +19,15 @@ public:
 
     HRESULT OpenDevice(AudioSink *audioSink);
     HRESULT StartCapture();
-    HRESULT GetStream(AudioSink* audioSink);
 
-    void Release();
+    HRESULT Stop();
+
+    bool isActive() { return bRunning; }
 
 private:
+    HRESULT GetStream();
+    void Release();
+
     const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
     const IID IID_IMMDeviceEnumerator = __uuidof(IMMDeviceEnumerator);
     const IID IID_IAudioClient = __uuidof(IAudioClient);
@@ -42,4 +47,8 @@ private:
     BYTE* pData;
     DWORD flags;
     IPropertyStore* pProperties = NULL;
+
+    bool bRunning;
+    AudioSink* activeAudioSink = NULL;
+    std::thread captureThread;
 };
