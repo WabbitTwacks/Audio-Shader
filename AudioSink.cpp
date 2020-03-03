@@ -8,12 +8,14 @@ AudioSink::~AudioSink()
 {
 }
 
-HRESULT AudioSink::SetFormat(WAVEFORMATEX* wfx)
+HRESULT AudioSink::SetFormat(WAVEFORMATEX* pwfx)
 {
-	return E_NOTIMPL;
+	wfx = *pwfx;
+
+	return S_OK;
 }
 
 HRESULT AudioSink::CopyData(BYTE* pData, UINT32 numFramesAvailable, BOOL* bDone)
 {
-	return E_NOTIMPL;
+	return S_OK;
 }

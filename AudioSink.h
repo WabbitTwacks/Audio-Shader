@@ -8,6 +8,9 @@ public:
 	AudioSink();
 	~AudioSink();
 
-	HRESULT SetFormat(WAVEFORMATEX* wfx);
+	HRESULT SetFormat(WAVEFORMATEX* pwfx);
 	HRESULT CopyData(BYTE *pData, UINT32 numFramesAvailable, BOOL *bDone);
+
+private:
+	WAVEFORMATEX wfx;
 };

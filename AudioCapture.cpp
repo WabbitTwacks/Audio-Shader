@@ -28,10 +28,8 @@ void AudioCapture::Release()
 	SAFE_RELEASE(pCaptureClient);
 }
 
-HRESULT AudioCapture::GetStream(AudioSink* audioSink)
+HRESULT AudioCapture::OpenDevice(AudioSink *audioSink)
 {
-	BOOL bDone = FALSE;
-
 	hr = CoCreateInstance(
 		CLSID_MMDeviceEnumerator, NULL,
 		CLSCTX_ALL, IID_IMMDeviceEnumerator,
@@ -102,6 +100,18 @@ HRESULT AudioCapture::GetStream(AudioSink* audioSink)
 		return hr;
 	}
 
+	return hr;
+}
+
+HRESULT AudioCapture::StartCapture()
+{
+	return E_NOTIMPL;
+}
+
+HRESULT AudioCapture::GetStream(AudioSink* audioSink)
+{
+	BOOL bDone = FALSE;
+
 	hnsActualDuration = (double)AC_REFTIMES_PER_SEC * bufferFrameCount / pwfx->nSamplesPerSec;
 
 	hr = pAudioClient->Start();
@@ -129,25 +139,44 @@ HRESULT AudioCapture::GetStream(AudioSink* audioSink)
 					&numFramesAvailable,
 					&flags, NULL, NULL
 			);
-		}
-		if (FAILED(hr))
-		{
-			Release();
-			return hr;
-		}
 
-		if (flags & AUDCLNT_BUFFERFLAGS_SILENT)
-			pData = NULL; //write silence
+			if (FAILED(hr))
+			{
+				Release();
+				return hr;
+			}
 
-		hr = audioSink->CopyData(
-			pData, numFramesAvailable, &bDone
-		);
-		if (FAILED(hr))
-		{
-			Release();
-			return hr;
-		}
+			if (flags & AUDCLNT_BUFFERFLAGS_SILENT)
+				pData = NULL; //write silence
+
+			hr = audioSink->CopyData(
+				pData, numFramesAvailable, &bDone
+			);
+			if (FAILED(hr))
+			{
+				Release();
+				return hr;
+			}
+
+			hr = pCaptureClient->ReleaseBuffer(numFramesAvailable);
+			if (FAILED(hr))
+			{
+				Release();
+				return hr;
+			}
+
+			hr = pCaptureClient->GetNextPacketSize(&packetLength);
+			if (FAILED(hr))
+			{
+				Release();
+				return hr;
+			}
+		}		
 	}
+
+	hr = pAudioClient->Stop();
+	if (FAILED(hr))
+		Release();
 
 	return hr;
 }

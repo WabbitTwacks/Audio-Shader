@@ -16,6 +16,8 @@ public:
     AudioCapture();
     ~AudioCapture();
 
+    HRESULT OpenDevice(AudioSink *audioSink);
+    HRESULT StartCapture();
     HRESULT GetStream(AudioSink* audioSink);
 
     void Release();
@@ -39,4 +41,5 @@ private:
     UINT32 packetLength = 0;
     BYTE* pData;
     DWORD flags;
+    IPropertyStore* pProperties = NULL;
 };
