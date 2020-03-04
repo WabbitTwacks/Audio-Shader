@@ -12,6 +12,10 @@ AudioCapture::AudioCapture()
 	hr = 0;
 	numFramesAvailable = 0;
 	pData = NULL;
+
+	IDevice_FriendlyName = { 0xa45c254e, 0xdf1c, 0x4efd, { 0x80, 0x20, 0x67, 0xd1, 0x46, 0xa8, 0x50, 0xe0 } };
+	keyDevFriendlyName.pid = 14;
+	keyDevFriendlyName.fmtid = IDevice_FriendlyName;
 }
 
 AudioCapture::~AudioCapture()
@@ -42,7 +46,7 @@ void AudioCapture::Release()
 	SAFE_RELEASE(pCaptureClient);
 }
 
-HRESULT AudioCapture::OpenDevice(AudioSink *audioSink)
+HRESULT AudioCapture::OpenDevice(AudioSink *audioSink, bool bLoopback)
 {
 	if (audioSink == NULL)
 		return S_FALSE;
@@ -58,7 +62,9 @@ HRESULT AudioCapture::OpenDevice(AudioSink *audioSink)
 		return hr;
 	}
 
-	hr = pEnumerator->GetDefaultAudioEndpoint(eCapture, eConsole, &pDevice); //use eMultimedia for audio recording
+	hr = pEnumerator->GetDefaultAudioEndpoint(bLoopback?eRender:eCapture,
+													eMultimedia, //use eMultimedia for audio recording
+													&pDevice); 
 	if (FAILED(hr))
 	{
 		Release();
@@ -81,7 +87,7 @@ HRESULT AudioCapture::OpenDevice(AudioSink *audioSink)
 
 	hr = pAudioClient->Initialize(
 		AUDCLNT_SHAREMODE_SHARED,
-		0,
+		bLoopback?AUDCLNT_STREAMFLAGS_LOOPBACK:0, //loopback or input
 		hnsRequestedDuration,
 		0,
 		pwfx,
@@ -124,6 +130,9 @@ HRESULT AudioCapture::OpenDevice(AudioSink *audioSink)
 
 HRESULT AudioCapture::StartCapture()
 {
+	if (bRunning)
+		Stop();
+
 	hnsActualDuration = (double)AC_REFTIMES_PER_SEC * bufferFrameCount / pwfx->nSamplesPerSec;
 
 	hr = pAudioClient->Start();
@@ -137,6 +146,26 @@ HRESULT AudioCapture::StartCapture()
 	captureThread = std::thread(&AudioCapture::GetStream, this);
 
 	return hr;
+}
+
+std::wstring AudioCapture::GetDeviceName()
+{
+	if (activeAudioSink == NULL)
+		return L"";
+
+	IPropertyStore* pProperties = NULL;
+	HRESULT hr = pDevice->OpenPropertyStore(STGM_READ, &pProperties);
+
+	if (FAILED(hr))
+	{
+		return L"";
+	}
+
+	PROPVARIANT vName;
+	PropVariantInit(&vName);
+	pProperties->GetValue(keyDevFriendlyName, &vName);
+
+	return vName.pwszVal;
 }
 
 HRESULT AudioCapture::GetStream()

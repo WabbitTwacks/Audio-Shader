@@ -5,6 +5,7 @@
 #include <mmdeviceapi.h>
 #include <Audioclient.h>
 #include <thread>
+#include <string>
 
 #include "AudioSink.h"
 
@@ -17,12 +18,14 @@ public:
     AudioCapture();
     ~AudioCapture();
 
-    HRESULT OpenDevice(AudioSink *audioSink);
+    HRESULT OpenDevice(AudioSink *audioSink, bool bLoopback = false);
     HRESULT StartCapture();
 
     HRESULT Stop();
 
     bool isActive() { return bRunning; }
+
+    std::wstring GetDeviceName();
 
 private:
     HRESULT GetStream();
@@ -48,7 +51,10 @@ private:
     DWORD flags;
     IPropertyStore* pProperties = NULL;
 
-    bool bRunning;
+    bool bRunning = false;
     AudioSink* activeAudioSink = NULL;
     std::thread captureThread;
+
+    PROPERTYKEY keyDevFriendlyName;
+    GUID IDevice_FriendlyName;
 };
