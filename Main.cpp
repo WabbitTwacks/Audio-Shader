@@ -4,8 +4,15 @@
 	#include <wx/wx.h>
 #endif
 
+#define RMS_MIN_SAMPLES 480
+
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+
 #include "AudioSink.h"
 #include "AudioCapture.h"
+#include "Wave.h"
 
 class ASApp : public wxApp
 {
@@ -47,6 +54,8 @@ wxIMPLEMENT_APP(ASApp);
 
 bool ASApp::OnInit()
 {
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+
 	ASFrame* frame = new ASFrame("AudioShader", wxPoint(50, 50), wxSize(800, 680));
 	frame->pApp = this;
 	frame->Show(true);
@@ -74,6 +83,8 @@ ASApp::~ASApp()
 		delete audioSink;
 	if (audioCapture != nullptr)
 		delete audioCapture;
+
+	_CrtDumpMemoryLeaks();
 }
 
 ASFrame::ASFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
@@ -154,13 +165,24 @@ void ASFrame::OnAbout(wxCommandEvent& event)
 void ASFrame::OnAudioStart(wxCommandEvent& event)
 {
 	pApp->audioCapture->StartCapture();
+
+	Wave* waveFile = new Wave(pApp->audioSink->GetChannels(),
+		pApp->audioSink->GetSampleRate(),
+		pApp->audioSink->GetByteRate(),
+		pApp->audioSink->GetFrameSize(),
+		pApp->audioSink->GetBitRate()
+	);
+	//waveFile->loadData(pAudioData, nDataSize);
+	waveFile->writeFile("test.wav");
+
+	delete waveFile;
 }
 
 void ASFrame::GetAudioLevels(wxTimerEvent& event)
 {
 	uint32_t nFrames = pApp->audioSink->GetFramesCount();
 
-	if (nFrames > 0)
+	if (nFrames >= RMS_MIN_SAMPLES)
 	{
 		//get audio buffer
 		uint8_t nChannels = pApp->audioSink->GetChannels();		
@@ -169,46 +191,32 @@ void ASFrame::GetAudioLevels(wxTimerEvent& event)
 		uint8_t* pAudioData = new uint8_t[nDataSize];
 		pApp->audioSink->GetBuffer(pAudioData, nFrames);
 
-		//get normalized values
-		uint16_t nNormSize = nFrames * nChannels;
+		uint16_t nRMSSize = nFrames * nChannels;
 		uint8_t nSampleSize = pApp->audioSink->GetFrameSize() / nChannels;
-		//double* pNormalized = new double[nNormSize];
-		double *pNormRMS = new double[nChannels];
-		memset(pNormRMS, 0, sizeof(double) * nChannels);
-
-		int64_t nSMax = pow(256, nSampleSize)/2 - 1;
-		int32_t nSMin = -pow(256, nSampleSize)/2;
+		double *pRMS = new double[nChannels];
+		memset(pRMS, 0, sizeof(double) * nChannels);
 
 		uint8_t* pData = pAudioData;
 		
-		for (int i = 0; i < nNormSize; i++)
+		for (int i = 0; i < nRMSSize; i++)
 		{
-			uint8_t* sample = new uint8_t[nSampleSize];
-			for (int s = 0; s < nSampleSize; s++)
-				sample[s] = pAudioData[i * nSampleSize + s];
-			//int32_t *sample;
-			//sample = (int32_t*)pData;
-			//pData += nSampleSize;
+			float *sample;
+			sample = (float*)pData;
+			pData += nSampleSize;
 
-			int32_t* v = (int32_t*)sample;
-			//pNormalized[i] = ((double)(*v - nSMin)/(double)(nSMax - nSMin) - 0.5) * 2.0;
 			uint8_t channel = i % nChannels;
-			double dNormal = ((double)((int64_t)*v - nSMin) / (double)(nSMax - nSMin) - 0.5) * 2.0;
-			pNormRMS[channel] += dNormal * dNormal;
-
-			//textAudioLevel->SetLabel(wxString::Format("%d", channel));
-
-			//delete[] sample;
+			
+			pRMS[channel] += *sample * *sample;
 		}
 
 		double dLevel = 0;
 
 		for (int c = 0; c < nChannels; c++)
 		{
-			pNormRMS[c] /= (double)nFrames;
-			pNormRMS[c] = sqrt(pNormRMS[c]);
+			pRMS[c] /= (double)nFrames;
+			pRMS[c] = sqrt(pRMS[c]);
 
-			dLevel += pNormRMS[c];
+			dLevel += pRMS[c];
 		}
 
 		dLevel /= nChannels;
@@ -218,8 +226,7 @@ void ASFrame::GetAudioLevels(wxTimerEvent& event)
 		textAudioLevel->SetLabel(wxString::Format("%.2f dB", dB));
 
 		delete[] pAudioData;
-		delete[] pNormRMS;
-		//delete[] pNormalized;
+		delete[] pRMS;
 	}
 }
 

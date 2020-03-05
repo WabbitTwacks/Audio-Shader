@@ -9,7 +9,7 @@
 
 #include "AudioSink.h"
 
-#define AC_REFTIMES_PER_SEC 10000000
+#define AC_REFTIMES_PER_SEC 10000
 #define AC_REFTIMES_PER_MSEC 10000
 
 class AudioCapture
@@ -52,7 +52,7 @@ private:
     IPropertyStore* pProperties = NULL;
 
     bool bRunning = false;
-    AudioSink* activeAudioSink = NULL;
+    AudioSink* activeAudioSink = nullptr;
     std::thread captureThread;
 
     PROPERTYKEY keyDevFriendlyName;

@@ -153,10 +153,12 @@
     <ClCompile Include="AudioCapture.cpp" />
     <ClCompile Include="AudioSink.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Wave.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AudioCapture.h" />
     <ClInclude Include="AudioSink.h" />
+    <ClInclude Include="Wave.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

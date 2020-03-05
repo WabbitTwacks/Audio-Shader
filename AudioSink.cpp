@@ -6,11 +6,15 @@ AudioSink::AudioSink()
 
 AudioSink::~AudioSink()
 {
+	if (pBuffer != nullptr)
+		delete[] pBuffer;
 }
 
 HRESULT AudioSink::SetFormat(WAVEFORMATEX* pwfx)
 {
 	wfx = *pwfx;
+
+	wavFile.Init(wfx.nChannels, wfx.nSamplesPerSec, wfx.nAvgBytesPerSec, wfx.nBlockAlign, wfx.wBitsPerSample);
 
 	return S_OK;
 }
@@ -44,6 +48,9 @@ HRESULT AudioSink::CopyData(BYTE* pData, UINT32 numFramesAvailable, BOOL* bDone)
 		}
 	}
 
+	//write to wav file for testing
+	wavFile.writeFile("test.wav", pBuffer, nTotalBuffSize, true);
+
 	return S_OK;
 }
 
@@ -54,17 +61,20 @@ uint32_t AudioSink::GetFramesCount()
 
 void AudioSink::GetBuffer(uint8_t* pReadBuff, uint32_t nFrames)
 {
-	if (numFrames < nFrames)
-		nFrames = numFrames;
+	if (numFrames.load() < nFrames)
+		nFrames = numFrames.load();
 
 	const std::lock_guard<std::mutex> lock(mtxBuffer);
 
+	if (pBuffer == nullptr || numFrames.load() == 0)
+		return;
+
 	uint32_t nDataSize = nFrames * wfx.nBlockAlign;
 
-	for (unsigned int i = 0; i < nDataSize; i++)
-	{		
-		pReadBuff[i] = pBuffer[i];			
-	}
+	memcpy_s(pReadBuff, nDataSize, pBuffer, nDataSize);
 
-	numFrames -= nFrames;
+	numFrames.store(numFrames.load() - nFrames);
+
+	if (numFrames < 0)
+		numFrames = 0;
 }

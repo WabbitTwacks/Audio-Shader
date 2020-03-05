@@ -48,7 +48,7 @@ void AudioCapture::Release()
 
 HRESULT AudioCapture::OpenDevice(AudioSink *audioSink, bool bLoopback)
 {
-	if (audioSink == NULL)
+	if (audioSink == nullptr)
 		return S_FALSE;
 
 	hr = CoCreateInstance(
@@ -174,7 +174,8 @@ HRESULT AudioCapture::GetStream()
 	
 	while (bDone == FALSE)
 	{
-		Sleep(hnsActualDuration / AC_REFTIMES_PER_MSEC / 2);
+		//Sleep(hnsActualDuration / AC_REFTIMES_PER_MSEC / 2);
+		//Sleep(1);
 
 		hr = pCaptureClient->GetNextPacketSize(&packetLength);
 		if (FAILED(hr))
