@@ -41,7 +41,7 @@ ShaderWindowGL::ShaderWindowGL(wxWindow* parent, int *args)
 
     m_renderTimer = new wxTimer(this);
     Bind(wxEVT_TIMER, &ShaderWindowGL::Render, this, wxID_ANY);
-    m_renderTimer->Start(16.666666);
+    m_renderTimer->Start(16.666666); //60 FPS
 
     //SetBackgroundStyle(wxBG_STYLE_CUSTOM);
 }
@@ -125,7 +125,7 @@ int ShaderWindowGL::GetHeight()
 
 void ShaderWindowGL::SetShaderSource(const char* shaderSource)
 {
-    delete m_fragShaderSource;
+    //delete m_fragShaderSource;
 
     m_fragShaderSource = (char*)shaderSource;
 }
@@ -140,15 +140,20 @@ bool ShaderWindowGL::CompileShader()
     glCompileShader(m_fragmentShader);
 
     int success;
-    char infoLog[512];
     glGetShaderiv(m_fragmentShader, GL_COMPILE_STATUS, &success);
     if (!success)
     {
-        glGetShaderInfoLog(m_fragmentShader, 512, NULL, infoLog);
+        int length = 0;
+        glGetShaderiv(m_fragmentShader, GL_INFO_LOG_LENGTH, &length);
+        char* errorLog = new char[length];
+        glGetShaderInfoLog(m_fragmentShader, length, NULL, errorLog);
+
         //return to somewhere
         OutputDebugString(L"ERROR::SHADER COMPILATION\n");
-        OutputDebugStringA(infoLog);
+        OutputDebugStringA(errorLog);
         OutputDebugString(L"\n");
+
+        delete[] errorLog;
 
         return false;
     }
@@ -160,11 +165,17 @@ bool ShaderWindowGL::CompileShader()
     glGetProgramiv(m_shaderProgram, GL_LINK_STATUS, &success);
     if (!success)
     {
-        glGetProgramInfoLog(m_shaderProgram, 512, NULL, infoLog);
+        int length = 0;
+        glGetProgramiv(m_shaderProgram, GL_INFO_LOG_LENGTH, &length);
+        char* errorLog = new char[length];
+        glGetProgramInfoLog(m_shaderProgram, 512, NULL, errorLog);
+
         //return to somewhere
         OutputDebugString(L"ERROR::SHADER LINKING\n");
-        OutputDebugStringA(infoLog);
+        OutputDebugStringA(errorLog);
         OutputDebugString(L"\n");
+
+        delete[] errorLog;
 
         return false;
     }
