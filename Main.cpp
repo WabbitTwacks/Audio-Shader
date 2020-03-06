@@ -12,11 +12,14 @@
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
 #include <crtdbg.h>
+#include <string>
 
 #include "AudioSink.h"
 #include "AudioCapture.h"
 #include "Wave.h"
 #include "ShaderWindowGL.h"
+#include "CodeEditor.h"
+#include "CodeNotebook.h"
 
 class ASApp : public wxApp
 {
@@ -43,17 +46,29 @@ private:
 	void OnAudioStart(wxCommandEvent& event);
 	void GetAudioLevels(wxTimerEvent& event);
 
+	void CompileShader(wxCommandEvent& event);
+
 	wxTimer *timerAudioLevel;
 	wxStaticText* textAudioLevel;
 
 	ShaderWindowGL* glShader;
+	CodeNotebook* codeNotebook;
+
+	std::string strStartCode =
+		"#version 330 core\n"
+		"out vec4 FragColor;\n"
+		"void main()\n"
+		"{ \n"
+		"	FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+		"}\0";
 };
 
 enum
 {
 	ID_New = 1,
 	ID_StartAudio,
-	ID_AudioLevelTimer
+	ID_AudioLevelTimer,
+	ID_BtnCompile
 };
 
 wxIMPLEMENT_APP(ASApp);
@@ -143,9 +158,19 @@ ASFrame::ASFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
 		5
 	);
 	
-	//Panel for shader code
+	//Panel for shader code notebook
+	codeNotebook = new CodeNotebook(this, wxID_ANY, wxDefaultPosition, { MIN_SHADER_WIDTH, MIN_SHADER_HEIGHT });	
+
+	wxBoxSizer* notebookSizer = new wxBoxSizer(wxVERTICAL);
+	notebookSizer->Add(codeNotebook, 1, wxEXPAND);
+	notebookSizer->Add(new wxButton(this, ID_BtnCompile, "Compile && Run", wxDefaultPosition, { 128, 25 }),
+		0, wxSHRINK | wxALL,
+		0
+	);
+	Bind(wxEVT_BUTTON, &ASFrame::CompileShader, this, ID_BtnCompile);
+
 	shaderSizer->Add( 
-		new wxPanel(this, -1, wxDefaultPosition, { 380, MIN_SHADER_HEIGHT }, wxDOUBLE_BORDER),
+		notebookSizer,
 		1, wxEXPAND | wxALL,
 		5
 	);
@@ -166,12 +191,7 @@ ASFrame::ASFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
 	timerAudioLevel->Start(100);
 
 	//test shader compilation
-	glShader->SetAndCompileShader(
-			"#version 330 core\n"
-			"out vec4 FragColor;\n"
-			"void main()\n"
-			"{ FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f); }\0"
-	);
+	glShader->SetAndCompileShader(strStartCode.c_str());
 }
 
 void ASFrame::OnExit(wxCommandEvent& event)
@@ -249,6 +269,11 @@ void ASFrame::GetAudioLevels(wxTimerEvent& event)
 		delete[] pAudioData;
 		delete[] pRMS;
 	}
+}
+
+void ASFrame::CompileShader(wxCommandEvent& event)
+{
+	glShader->SetAndCompileShader( 	codeNotebook->GetCurrentCode() );
 }
 
 void ASFrame::OnNew(wxCommandEvent& event)

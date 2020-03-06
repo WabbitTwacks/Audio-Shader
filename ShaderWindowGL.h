@@ -46,8 +46,11 @@ public:
 	int GetHeight();
 
 	void SetShaderSource(const char* shaderSource);
+	void SetShaderSource(wxString);
+
 	bool CompileShader();
 	bool SetAndCompileShader(const char* shaderSource);
+	bool SetAndCompileShader(wxString);
 
 	void Prep2DViewport(int topleftX, int topleftY, int bottomrightX, int bottomrightY);
 };

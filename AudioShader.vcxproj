@@ -164,6 +164,8 @@
   <ItemGroup>
     <ClCompile Include="AudioCapture.cpp" />
     <ClCompile Include="AudioSink.cpp" />
+    <ClCompile Include="CodeEditor.cpp" />
+    <ClCompile Include="CodeNotebook.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="ShaderWindowGL.cpp" />
     <ClCompile Include="Wave.cpp" />
@@ -171,6 +173,8 @@
   <ItemGroup>
     <ClInclude Include="AudioCapture.h" />
     <ClInclude Include="AudioSink.h" />
+    <ClInclude Include="CodeEditor.h" />
+    <ClInclude Include="CodeNotebook.h" />
     <ClInclude Include="ShaderWindowGL.h" />
     <ClInclude Include="Wave.h" />
   </ItemGroup>

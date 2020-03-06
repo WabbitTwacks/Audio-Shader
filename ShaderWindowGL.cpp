@@ -48,6 +48,9 @@ ShaderWindowGL::ShaderWindowGL(wxWindow* parent, int *args)
 
 ShaderWindowGL::~ShaderWindowGL()
 {
+    glDetachShader(m_shaderProgram, m_fragmentShader);
+    glDeleteShader(m_fragmentShader);
+
     delete m_context;
     delete m_fragShaderSource;
 }
@@ -125,9 +128,23 @@ int ShaderWindowGL::GetHeight()
 
 void ShaderWindowGL::SetShaderSource(const char* shaderSource)
 {
-    //delete m_fragShaderSource;
+    delete m_fragShaderSource;
 
-    m_fragShaderSource = (char*)shaderSource;
+    unsigned int iSize = strlen(shaderSource) + 1;
+
+    m_fragShaderSource = new char[iSize];
+    memcpy_s(m_fragShaderSource, iSize, shaderSource, iSize);
+}
+
+void ShaderWindowGL::SetShaderSource(wxString shaderSource)
+{
+    delete m_fragShaderSource;
+
+    unsigned int iSize = shaderSource.length() + 1;
+
+    m_fragShaderSource = new char[iSize];
+
+    memcpy_s(m_fragShaderSource, iSize, (const char*)shaderSource.mbc_str(), iSize);
 }
 
 bool ShaderWindowGL::CompileShader()
@@ -186,6 +203,12 @@ bool ShaderWindowGL::CompileShader()
 }
 
 bool ShaderWindowGL::SetAndCompileShader(const char* shaderSource)
+{
+    SetShaderSource(shaderSource);
+    return CompileShader();
+}
+
+bool ShaderWindowGL::SetAndCompileShader(wxString shaderSource)
 {
     SetShaderSource(shaderSource);
     return CompileShader();
