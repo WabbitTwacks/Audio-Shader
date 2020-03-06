@@ -26,8 +26,9 @@ CodeEditor::CodeEditor(wxWindow* parent, wxString text) :
 	StyleSetForeground(wxSTC_C_COMMENT, wxColour(150, 150, 150));
 	StyleSetForeground(wxSTC_C_COMMENTLINE, wxColour(150, 150, 150));
 
-	SetKeyWords(0, wxT("return for while break continue if else out"));
-	SetKeyWords(1, wxT("const int float void vec2 vec3 vec4"));
+	SetKeyWords(0, wxT("return for while break continue if else in out uniform"));
+	SetKeyWords(1, wxT("const int float void vec2 vec3 vec4 ivec2 ivec3 ivec4 bvec2 bvec3 bvec4"
+						"uvec2 uvec3 uvec4 dvec2 dvec3 dvec4"));
 
 	SetText(text);
 }
