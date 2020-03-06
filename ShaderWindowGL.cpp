@@ -35,6 +35,12 @@ ShaderWindowGL::ShaderWindowGL(wxWindow* parent, int *args)
     glGetProgramiv = (PFNGLGETPROGRAMIVPROC)wglGetProcAddress("glGetProgramiv");
     glGetProgramInfoLog = (PFNGLGETPROGRAMINFOLOGPROC)wglGetProcAddress("glGetProgramInfoLog");
     glDetachShader = (PFNGLDETACHSHADERPROC)wglGetProcAddress("glDetachShader");
+    glGetUniformLocation = (PFNGLGETUNIFORMLOCATIONPROC)wglGetProcAddress("glGetUniformLocation");
+    glUniformf = (PFNGLUNIFORM1FPROC)wglGetProcAddress("glUniform1f");
+    glUniform2f = (PFNGLUNIFORM2FPROC)wglGetProcAddress("glUniform2f");
+    glUniform3f = (PFNGLUNIFORM3FPROC)wglGetProcAddress("glUniform3f");
+    glUniform4f = (PFNGLUNIFORM4FPROC)wglGetProcAddress("glUniform4f");
+    glUniform2i = (PFNGLUNIFORM2IPROC)wglGetProcAddress("glUniform2i");
 
     //bind Resized and Render Timer
     parent->Bind(wxEVT_SIZE, &ShaderWindowGL::Resized, this, wxID_ANY);
@@ -60,7 +66,8 @@ void ShaderWindowGL::Render(wxTimerEvent& event)
     if (!IsShown())
         return;
 
-    clock_t deltaTime = clock() - m_time;
+    clock_t deltaTime = clock()/(float)CLOCKS_PER_SEC - m_time;
+    m_time = clock() / (float)CLOCKS_PER_SEC;
 
     SetCurrent(*m_context);
     wxClientDC dc(this);
@@ -69,6 +76,12 @@ void ShaderWindowGL::Render(wxTimerEvent& event)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     //glViewport(0, 0, (GLint)GetSize().x, (GLint)GetSize().y);
     Prep2DViewport(0, 0, GetWidth(), GetHeight());
+
+    //shader uniforms
+    int iTime = glGetUniformLocation(m_shaderProgram, "iTime");
+    int iResolution = glGetUniformLocation(m_shaderProgram, "iResolution");
+    glUniformf(iTime, m_time);
+    glUniform2f(iResolution, GetWidth(), GetHeight());
 
     //background
     glColor4f(0.4, 0.1, 0.9, 1);
@@ -91,8 +104,6 @@ void ShaderWindowGL::Render(wxTimerEvent& event)
 
     glFlush();
     SwapBuffers();
-
-    m_time = clock() / (float)CLOCKS_PER_SEC;
 }
 
 void* ShaderWindowGL::GetFuncAddress(const char* name)
