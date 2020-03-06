@@ -171,7 +171,7 @@ void ASFrame::OnExit(wxCommandEvent& event)
 
 void ASFrame::OnAbout(wxCommandEvent& event)
 {
-	wxMessageBox(	"This is an audio visualizer that uses HLSL fragment shaders.",
+	wxMessageBox(	"This is an audio visualizer that uses GLSL fragment shaders.",
 					"About Audio Shader", wxOK | wxICON_INFORMATION);
 }
 
