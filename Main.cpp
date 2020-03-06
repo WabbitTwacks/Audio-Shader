@@ -6,6 +6,9 @@
 
 #define RMS_MIN_SAMPLES 480
 
+#define MIN_SHADER_WIDTH 800
+#define MIN_SHADER_HEIGHT 450
+
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
 #include <crtdbg.h>
@@ -13,6 +16,7 @@
 #include "AudioSink.h"
 #include "AudioCapture.h"
 #include "Wave.h"
+#include "ShaderWindowGL.h"
 
 class ASApp : public wxApp
 {
@@ -125,13 +129,21 @@ ASFrame::ASFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
 
 	Bind(wxEVT_BUTTON, &ASFrame::OnAudioStart, this, ID_StartAudio);
 
-	shaderSizer->Add( //Panel for GL Context
-		new wxPanel(this, -1, wxDefaultPosition, { 800, 450 }, wxDOUBLE_BORDER),
-		1, wxEXPAND | wxALL,
+	//Panel for GL Context
+	wxPanel* shaderPanel = new wxPanel(this, -1, wxDefaultPosition, { MIN_SHADER_WIDTH, MIN_SHADER_HEIGHT }, wxSIMPLE_BORDER);
+
+	int args[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER, WX_GL_DEPTH_SIZE, 16, 0 };
+	ShaderWindowGL *glShader = new ShaderWindowGL(shaderPanel, args);
+
+	shaderSizer->Add( 
+		shaderPanel,
+		1, wxSHAPED | wxALL, //maintain aspect ratio
 		5
 	);
-	shaderSizer->Add( //Panel for shader code
-		new wxPanel(this, -1, wxDefaultPosition, { 380, 450 }, wxDOUBLE_BORDER),
+	
+	//Panel for shader code
+	shaderSizer->Add( 
+		new wxPanel(this, -1, wxDefaultPosition, { 380, MIN_SHADER_HEIGHT }, wxDOUBLE_BORDER),
 		1, wxEXPAND | wxALL,
 		5
 	);
