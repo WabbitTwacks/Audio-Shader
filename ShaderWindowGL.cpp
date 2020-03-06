@@ -7,6 +7,27 @@ ShaderWindowGL::ShaderWindowGL(wxWindow* parent, int *args)
     m_context = new wxGLContext(this);
     m_parent = parent;
 
+    //get OpenGL functions
+    SetCurrent(*m_context);
+    /*glGetStringi = (PFNGLGETSTRINGIPROC)wglGetProcAddress("glGetStringi");
+
+    int n = 0;
+    glGetIntegerv(GL_NUM_EXTENSIONS, &n);    
+
+    OutputDebugString(L"GL_EXTENSIONS:\n");
+    for (int i = 0; i < n; i++)
+    {
+        OutputDebugString((LPCWSTR)glGetStringi(GL_EXTENSIONS, i));
+        OutputDebugString(L"\n");
+    }*/        
+
+    glCreateShader = (PFNGLCREATESHADERPROC)wglGetProcAddress("glCreateShader");
+    glShaderSource = (PFNGLSHADERSOURCEPROC)wglGetProcAddress("glShaderSource");
+    glCompileShader = (PFNGLCOMPILESHADERPROC)wglGetProcAddress("glCompileShader");
+    glGetShaderiv = (PFNGLGETSHADERIVPROC)wglGetProcAddress("glGetShaderiv");
+    glGetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC)wglGetProcAddress("glGetShaderInfoLog");
+
+    //bind Resized and Render Timer
     parent->Bind(wxEVT_SIZE, &ShaderWindowGL::Resized, this, wxID_ANY);
 
     m_renderTimer = new wxTimer(this);
@@ -19,6 +40,7 @@ ShaderWindowGL::ShaderWindowGL(wxWindow* parent, int *args)
 ShaderWindowGL::~ShaderWindowGL()
 {
     delete m_context;
+    delete m_fragShaderSource;
 }
 
 void ShaderWindowGL::Render(wxTimerEvent& event)
@@ -61,6 +83,21 @@ void ShaderWindowGL::Render(wxTimerEvent& event)
     m_time = clock() / (float)CLOCKS_PER_SEC;
 }
 
+void* ShaderWindowGL::GetFuncAddress(const char* name)
+{
+    void* p = (void*)wglGetProcAddress(name);
+
+    if (p == 0 ||
+        (p == (void*)0x1) || (p == (void*)0x2) || (p == (void*)0x3) ||
+        (p == (void*)-1))
+    { //fallback
+        HMODULE module = LoadLibraryA("opengl32.dll");
+        p = (void*)GetProcAddress(module, name);
+    }
+
+    return p;
+}
+
 void ShaderWindowGL::Resized(wxSizeEvent& event)
 {
     SetSize({m_parent->GetSize().x, m_parent->GetSize().y});
@@ -75,6 +112,43 @@ int ShaderWindowGL::GetWidth()
 int ShaderWindowGL::GetHeight()
 {
     return GetSize().y;
+}
+
+void ShaderWindowGL::SetShaderSource(const char* shaderSource)
+{
+    delete m_fragShaderSource;
+
+    m_fragShaderSource = (char*)shaderSource;
+}
+
+bool ShaderWindowGL::CompileShader()
+{
+    m_fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(m_fragmentShader, 1, &m_fragShaderSource, NULL);
+    glCompileShader(m_fragmentShader);
+
+    int success;
+    char infoLog[512];
+    glGetShaderiv(m_fragmentShader, GL_COMPILE_STATUS, &success);
+
+    if (!success)
+    {
+        glGetShaderInfoLog(m_fragmentShader, 512, NULL, infoLog);
+        //return to somewhere
+        OutputDebugString(L"ERROR::SHADER COMPILATION\n");
+        OutputDebugStringA(infoLog);
+        OutputDebugString(L"\n");
+
+        return false;
+    }
+
+    return true;
+}
+
+bool ShaderWindowGL::SetAndCompileShader(const char* shaderSource)
+{
+    SetShaderSource(shaderSource);
+    return CompileShader();
 }
 
 void ShaderWindowGL::Prep2DViewport(int topleftX, int topleftY, int bottomrightX, int bottomrightY)

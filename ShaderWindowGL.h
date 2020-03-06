@@ -2,11 +2,13 @@
 
 #include <wx/glcanvas.h>
 #include <gl/GLU.h>
+#include <gl/glext.h>
 #include <ctime>
 
 class ShaderWindowGL : public wxGLCanvas
 {
 	void Render(wxTimerEvent& event);
+	void* GetFuncAddress(const char* name);
 
 	wxGLContext* m_context;
 	wxWindow* m_parent;
@@ -14,6 +16,16 @@ class ShaderWindowGL : public wxGLCanvas
 	wxTimer* m_renderTimer;
 
 	float m_time = 0; //time from shader start in seconds
+
+	char* m_fragShaderSource = nullptr;
+	unsigned int m_fragmentShader = 0;
+
+	PFNGLCREATESHADERPROC glCreateShader;
+	PFNGLSHADERSOURCEPROC glShaderSource;
+	PFNGLCOMPILESHADERPROC glCompileShader;
+	PFNGLGETSHADERIVPROC glGetShaderiv;
+	PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog;
+	PFNGLGETSTRINGIPROC glGetStringi;
 
 public:
 	ShaderWindowGL(wxWindow* parent, int *args);
@@ -23,6 +35,10 @@ public:
 
 	int GetWidth();
 	int GetHeight();
+
+	void SetShaderSource(const char* shaderSource);
+	bool CompileShader();
+	bool SetAndCompileShader(const char* shaderSource);
 
 	void Prep2DViewport(int topleftX, int topleftY, int bottomrightX, int bottomrightY);
 };

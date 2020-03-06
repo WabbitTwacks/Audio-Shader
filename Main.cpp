@@ -45,6 +45,8 @@ private:
 
 	wxTimer *timerAudioLevel;
 	wxStaticText* textAudioLevel;
+
+	ShaderWindowGL* glShader;
 };
 
 enum
@@ -133,7 +135,7 @@ ASFrame::ASFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
 	wxPanel* shaderPanel = new wxPanel(this, -1, wxDefaultPosition, { MIN_SHADER_WIDTH, MIN_SHADER_HEIGHT }, wxSIMPLE_BORDER);
 
 	int args[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER, WX_GL_DEPTH_SIZE, 16, 0 };
-	ShaderWindowGL *glShader = new ShaderWindowGL(shaderPanel, args);
+	glShader = new ShaderWindowGL(shaderPanel, args);
 
 	shaderSizer->Add( 
 		shaderPanel,
@@ -162,6 +164,14 @@ ASFrame::ASFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
 	timerAudioLevel = new wxTimer(this, ID_AudioLevelTimer);
 	Bind(wxEVT_TIMER, &ASFrame::GetAudioLevels, this, ID_AudioLevelTimer);
 	timerAudioLevel->Start(100);
+
+	//test shader compilation
+	glShader->SetAndCompileShader(
+			"#version 330 core\n"
+			"out vec4 FragColor;\n"
+			"void main()\n"
+			"{ FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f); }\0"
+	);
 }
 
 void ASFrame::OnExit(wxCommandEvent& event)
