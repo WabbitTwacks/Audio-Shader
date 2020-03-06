@@ -19,12 +19,21 @@ class ShaderWindowGL : public wxGLCanvas
 
 	char* m_fragShaderSource = nullptr;
 	unsigned int m_fragmentShader = 0;
+	unsigned int m_shaderProgram = 0;
 
+	PFNGLCREATEPROGRAMPROC glCreateProgram;
 	PFNGLCREATESHADERPROC glCreateShader;
 	PFNGLSHADERSOURCEPROC glShaderSource;
 	PFNGLCOMPILESHADERPROC glCompileShader;
 	PFNGLGETSHADERIVPROC glGetShaderiv;
 	PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog;
+	PFNGLATTACHSHADERPROC glAttachShader;
+	PFNGLLINKPROGRAMPROC glLinkProgram;
+	PFNGLUSEPROGRAMPROC glUseProgram;
+	PFNGLDELETESHADERPROC glDeleteShader;
+	PFNGLGETPROGRAMIVPROC glGetProgramiv;
+	PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog;
+	PFNGLDETACHSHADERPROC glDetachShader;
 	PFNGLGETSTRINGIPROC glGetStringi;
 
 public:

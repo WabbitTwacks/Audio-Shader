@@ -9,23 +9,32 @@ ShaderWindowGL::ShaderWindowGL(wxWindow* parent, int *args)
 
     //get OpenGL functions
     SetCurrent(*m_context);
-    /*glGetStringi = (PFNGLGETSTRINGIPROC)wglGetProcAddress("glGetStringi");
+
+    glGetStringi = (PFNGLGETSTRINGIPROC)wglGetProcAddress("glGetStringi");
 
     int n = 0;
     glGetIntegerv(GL_NUM_EXTENSIONS, &n);    
 
-    OutputDebugString(L"GL_EXTENSIONS:\n");
+    OutputDebugStringA("GL_EXTENSIONS:\n");
     for (int i = 0; i < n; i++)
     {
-        OutputDebugString((LPCWSTR)glGetStringi(GL_EXTENSIONS, i));
-        OutputDebugString(L"\n");
-    }*/        
+        OutputDebugStringA((LPCSTR)glGetStringi(GL_EXTENSIONS, i));
+        OutputDebugStringA("\n");
+    }      
 
+    glCreateProgram = (PFNGLCREATEPROGRAMPROC)wglGetProcAddress("glCreateProgram");
     glCreateShader = (PFNGLCREATESHADERPROC)wglGetProcAddress("glCreateShader");
     glShaderSource = (PFNGLSHADERSOURCEPROC)wglGetProcAddress("glShaderSource");
     glCompileShader = (PFNGLCOMPILESHADERPROC)wglGetProcAddress("glCompileShader");
     glGetShaderiv = (PFNGLGETSHADERIVPROC)wglGetProcAddress("glGetShaderiv");
     glGetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC)wglGetProcAddress("glGetShaderInfoLog");
+    glAttachShader = (PFNGLATTACHSHADERPROC)wglGetProcAddress("glAttachShader");
+    glLinkProgram = (PFNGLLINKPROGRAMPROC)wglGetProcAddress("glLinkProgram");
+    glUseProgram = (PFNGLUSEPROGRAMPROC)wglGetProcAddress("glUseProgram");
+    glDeleteShader = (PFNGLDELETESHADERPROC)wglGetProcAddress("glDeleteShader");
+    glGetProgramiv = (PFNGLGETPROGRAMIVPROC)wglGetProcAddress("glGetProgramiv");
+    glGetProgramInfoLog = (PFNGLGETPROGRAMINFOLOGPROC)wglGetProcAddress("glGetProgramInfoLog");
+    glDetachShader = (PFNGLDETACHSHADERPROC)wglGetProcAddress("glDetachShader");
 
     //bind Resized and Render Timer
     parent->Bind(wxEVT_SIZE, &ShaderWindowGL::Resized, this, wxID_ANY);
@@ -68,14 +77,14 @@ void ShaderWindowGL::Render(wxTimerEvent& event)
     glEnd();
 
     // square
-    float green = (sin(m_time) + 1.0f) * 0.5f;
+    /*float green = (sin(m_time) + 1.0f) * 0.5f;
     glColor4f(0.5, green, 0.1f, 1);
     glBegin(GL_QUADS);
         glVertex3f(GetWidth() / 4, GetHeight() / 3, 0);
         glVertex3f(GetWidth() * 3 / 4, GetHeight() / 3, 0);
         glVertex3f(GetWidth() * 3 / 4, GetHeight() * 2 / 3, 0);
         glVertex3f(GetWidth() / 4, GetHeight() * 2 / 3, 0);
-    glEnd();
+    glEnd();*/
 
     glFlush();
     SwapBuffers();
@@ -123,6 +132,9 @@ void ShaderWindowGL::SetShaderSource(const char* shaderSource)
 
 bool ShaderWindowGL::CompileShader()
 {
+    glDetachShader(m_shaderProgram, m_fragmentShader);
+    glDeleteShader(m_fragmentShader);
+
     m_fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(m_fragmentShader, 1, &m_fragShaderSource, NULL);
     glCompileShader(m_fragmentShader);
@@ -130,7 +142,6 @@ bool ShaderWindowGL::CompileShader()
     int success;
     char infoLog[512];
     glGetShaderiv(m_fragmentShader, GL_COMPILE_STATUS, &success);
-
     if (!success)
     {
         glGetShaderInfoLog(m_fragmentShader, 512, NULL, infoLog);
@@ -141,6 +152,24 @@ bool ShaderWindowGL::CompileShader()
 
         return false;
     }
+
+    m_shaderProgram = glCreateProgram();
+    glAttachShader(m_shaderProgram, m_fragmentShader);
+    glLinkProgram(m_shaderProgram);
+
+    glGetProgramiv(m_shaderProgram, GL_LINK_STATUS, &success);
+    if (!success)
+    {
+        glGetProgramInfoLog(m_shaderProgram, 512, NULL, infoLog);
+        //return to somewhere
+        OutputDebugString(L"ERROR::SHADER LINKING\n");
+        OutputDebugStringA(infoLog);
+        OutputDebugString(L"\n");
+
+        return false;
+    }
+
+    glUseProgram(m_shaderProgram);
 
     return true;
 }
