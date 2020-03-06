@@ -14,6 +14,13 @@ HRESULT AudioSink::SetFormat(WAVEFORMATEX* pwfx)
 {
 	wfx = *pwfx;
 
+	if (pBuffer != nullptr)
+		delete[] pBuffer;
+
+	nBufferSize = wfx.nSamplesPerSec * wfx.nBlockAlign;
+	pBuffer = new BYTE[nBufferSize];
+	nBufferPos = 0;
+
 	wavFile.Init(wfx.nChannels, wfx.nSamplesPerSec, wfx.nAvgBytesPerSec, wfx.nBlockAlign, wfx.wBitsPerSample);
 
 	return S_OK;
@@ -24,39 +31,44 @@ HRESULT AudioSink::CopyData(BYTE* pData, UINT32 numFramesAvailable, BOOL* bDone)
 	if (numFramesAvailable < 1)
 		return S_FALSE;
 
-	numFrames = numFramesAvailable;
+	numFrames.store(numFrames.load() + numFramesAvailable);	
+	if (numFrames.load() > wfx.nSamplesPerSec)
+		numFrames.store(wfx.nSamplesPerSec);
 
 	const std::lock_guard<std::mutex> lock(mtxBuffer);
 
-	if (pBuffer != nullptr)
-		delete[] pBuffer;
+	//if (pBuffer != nullptr)
+		//delete[] pBuffer;
 
-	uint32_t nTotalBuffSize = numFramesAvailable * wfx.nBlockAlign;
+	uint32_t nCopySize = numFramesAvailable * wfx.nBlockAlign;
 
-	pBuffer = new BYTE[nTotalBuffSize];
+	//write to wav file for testing
+	//wavFile.writeFile("test.wav", pData, nCopySize, true);
 
-	for (unsigned int i = 0; i < nTotalBuffSize; i++)
-	{		
+	//pBuffer = new BYTE[nCopySize];
+
+	for (unsigned int i = 0; i < nCopySize; i++)
+	{
 		if (pData != NULL)
 		{
-			pBuffer[i] = *pData;
+			pBuffer[nBufferPos] = *pData;
 			pData++;
 		}
 		else
 		{
-			pBuffer[i] = 0;
+			pBuffer[nBufferPos] = 0;
 		}
-	}
 
-	//write to wav file for testing
-	wavFile.writeFile("test.wav", pBuffer, nTotalBuffSize, true);
+		nBufferPos++;
+		nBufferPos %= nBufferSize;
+	}
 
 	return S_OK;
 }
 
 uint32_t AudioSink::GetFramesCount()
 {
-	return numFrames;
+	return numFrames.load();
 }
 
 void AudioSink::GetBuffer(uint8_t* pReadBuff, uint32_t nFrames)
@@ -71,7 +83,21 @@ void AudioSink::GetBuffer(uint8_t* pReadBuff, uint32_t nFrames)
 
 	uint32_t nDataSize = nFrames * wfx.nBlockAlign;
 
-	memcpy_s(pReadBuff, nDataSize, pBuffer, nDataSize);
+	//memcpy_s(pReadBuff, nDataSize, pBuffer, nDataSize);
+	uint32_t nBuffReadPos = 0;
+	uint32_t nUnreadData = numFrames.load() * wfx.nBlockAlign;
+	if (nBufferPos >= nUnreadData)
+		nBuffReadPos = nBufferPos - nUnreadData;
+	else
+		nBuffReadPos = nUnreadData - nBufferPos;
+
+	for (int i = 0; i < nDataSize; i++)
+	{
+		pReadBuff[i] = pBuffer[nBuffReadPos];
+
+		nBuffReadPos++;
+		nBuffReadPos %= nBufferSize;
+	}
 
 	numFrames.store(numFrames.load() - nFrames);
 

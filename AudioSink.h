@@ -27,6 +27,8 @@ public:
 private:
 	WAVEFORMATEX wfx;
 	BYTE* pBuffer = nullptr;
+	uint32_t nBufferPos = 0;
+	uint32_t nBufferSize = 0;
 	std::atomic<std::uint32_t> numFrames = 0;
 	std::mutex mtxBuffer;
 

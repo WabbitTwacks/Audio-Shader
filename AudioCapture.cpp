@@ -175,7 +175,7 @@ HRESULT AudioCapture::GetStream()
 	while (bDone == FALSE)
 	{
 		//Sleep(hnsActualDuration / AC_REFTIMES_PER_MSEC / 2);
-		//Sleep(1);
+		Sleep(10);
 
 		hr = pCaptureClient->GetNextPacketSize(&packetLength);
 		if (FAILED(hr))

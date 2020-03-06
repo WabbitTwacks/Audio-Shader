@@ -117,20 +117,21 @@ ASFrame::ASFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
 	wxBoxSizer* bottomSizer = new wxBoxSizer(wxVERTICAL);
 	wxBoxSizer* shaderSizer = new wxBoxSizer(wxHORIZONTAL);
 
+	//audio panel
 	wxPanel* audioPanel = new wxPanel(this, -1, wxDefaultPosition, { 800, 100 }, wxDOUBLE_BORDER);
 	wxStaticText* staticText1 = new wxStaticText(audioPanel, wxID_ANY, "Audio Level:", {5, 5}, { 128, 16 });
-	textAudioLevel = new wxStaticText(audioPanel, wxID_ANY, "0: dB", {5, 20}, { 128, 16 });
-	wxButton* btnStartAudio = new wxButton(audioPanel, ID_StartAudio, "Start", { 5, 40 }, { 128, 20 });
+	textAudioLevel = new wxStaticText(audioPanel, wxID_ANY, "0: dB", {5, 25}, { 128, 16 });
+	wxButton* btnStartAudio = new wxButton(audioPanel, ID_StartAudio, "Start", { 5, 45 }, { 128, 20 });
 
 	Bind(wxEVT_BUTTON, &ASFrame::OnAudioStart, this, ID_StartAudio);
 
 	shaderSizer->Add( //Panel for GL Context
-		new wxPanel(this, -1, wxDefaultPosition, { 380, 400 }, wxDOUBLE_BORDER),
+		new wxPanel(this, -1, wxDefaultPosition, { 800, 450 }, wxDOUBLE_BORDER),
 		1, wxEXPAND | wxALL,
 		5
 	);
 	shaderSizer->Add( //Panel for shader code
-		new wxPanel(this, -1, wxDefaultPosition, { 380, 400 }, wxDOUBLE_BORDER),
+		new wxPanel(this, -1, wxDefaultPosition, { 380, 450 }, wxDOUBLE_BORDER),
 		1, wxEXPAND | wxALL,
 		5
 	);
@@ -159,23 +160,21 @@ void ASFrame::OnExit(wxCommandEvent& event)
 void ASFrame::OnAbout(wxCommandEvent& event)
 {
 	wxMessageBox(	"This is an audio visualizer that uses HLSL fragment shaders.",
-					"About Hello World", wxOK | wxICON_INFORMATION);
+					"About Audio Shader", wxOK | wxICON_INFORMATION);
 }
 
 void ASFrame::OnAudioStart(wxCommandEvent& event)
 {
 	pApp->audioCapture->StartCapture();
 
-	Wave* waveFile = new Wave(pApp->audioSink->GetChannels(),
+	/*Wave* waveFile = new Wave(pApp->audioSink->GetChannels(),
 		pApp->audioSink->GetSampleRate(),
 		pApp->audioSink->GetByteRate(),
 		pApp->audioSink->GetFrameSize(),
 		pApp->audioSink->GetBitRate()
 	);
-	//waveFile->loadData(pAudioData, nDataSize);
 	waveFile->writeFile("test.wav");
-
-	delete waveFile;
+	delete waveFile;*/
 }
 
 void ASFrame::GetAudioLevels(wxTimerEvent& event)
