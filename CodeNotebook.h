@@ -18,12 +18,12 @@ private:
 	 
 	std::string m_strStartCode =
 		"#version 330 core\n"
-		"out vec4 FragColor;\n\n"
+		"out vec4 fragColor;\n\n"
 		"uniform float iTime;\n"
 		"uniform vec2 iResolution;\n\n"
 		"void main()\n"
 		"{ \n"
 		"	vec2 UV = (gl_FragCoord.xy - .5 * iResolution)/iResolution.y;\n\n"
-		"	FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+		"	fragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
 		"}\n";
 };
