@@ -103,6 +103,9 @@ wxString CodeNotebook::GetErrorOnLine(int l)
 
 void CodeNotebook::ClearErrors()
 {
+	m_errorList.clear();
+	m_mapLineToError.clear();
+
 	CodeEditor* pCE = (CodeEditor*)GetPage(GetSelection());
 
 	if (pCE)
