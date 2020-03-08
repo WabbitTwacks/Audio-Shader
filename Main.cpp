@@ -54,7 +54,9 @@ private:
 	void OnAudioStart(wxCommandEvent& event);
 	void GetAudioLevels(wxTimerEvent& event);
 
-	void CompileShader(wxCommandEvent& event);
+	void OnCompileShader(wxCommandEvent& event);
+
+	void CompileShader();
 
 	wxTimer *timerAudioLevel;
 	wxStaticText* textAudioLevel;
@@ -62,14 +64,6 @@ private:
 	ShaderWindowGL* glShader;
 	CodeNotebook* codeNotebook;
 	wxStaticText* errorLog;
-
-	std::string strStartCode =
-		"#version 330 core\n"
-		"out vec4 FragColor;\n"
-		"void main()\n"
-		"{ \n"
-		"	FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-		"}\0";
 };
 
 enum
@@ -203,7 +197,7 @@ ASFrame::ASFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
 		0, wxSHRINK | wxALL,
 		0
 	);
-	Bind(wxEVT_BUTTON, &ASFrame::CompileShader, this, ID_BtnCompile);
+	Bind(wxEVT_BUTTON, &ASFrame::OnCompileShader, this, ID_BtnCompile);
 
 	shaderSizer->Add( 
 		notebookSizer,
@@ -229,8 +223,9 @@ ASFrame::ASFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
 	//bind event to get events from selected lines in the code editor
 	Bind(EVENT_SEL_LINE, &ASFrame::OnLineSelected, this, wxID_ANY);
 
-	//test shader compilation
-	glShader->SetAndCompileShader(strStartCode.c_str());
+	//load and comile template shader
+	codeNotebook->NewShader();
+	CompileShader();
 }
 
 void ASFrame::OnExit(wxCommandEvent& event)
@@ -322,7 +317,12 @@ void ASFrame::GetAudioLevels(wxTimerEvent& event)
 	}
 }
 
-void ASFrame::CompileShader(wxCommandEvent& event)
+void ASFrame::OnCompileShader(wxCommandEvent& event)
+{
+	CompileShader();
+}
+
+void ASFrame::CompileShader()
 {
 	codeNotebook->ClearErrors();
 

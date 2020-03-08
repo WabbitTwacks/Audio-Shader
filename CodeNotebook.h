@@ -6,6 +6,8 @@
 
 #include "CodeEditor.h"
 
+constexpr auto TEMPLATE_PATH = "./shaders/template.frag";
+
 class CodeNotebook : public wxNotebook
 {
 public:
@@ -21,6 +23,7 @@ public:
 	void ClearErrors();
 	bool SaveShader(bool saveAs = false);
 	bool OpenShader();
+	wxString LoadCodeFromFile(wxString path);
 
 private:
 

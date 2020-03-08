@@ -11,12 +11,14 @@ CodeNotebook::CodeNotebook(wxWindow* parent, wxWindowID id, const wxPoint& pos, 
 {
 	SetBackgroundColour(wxColor(100, 100, 100));
 
-	NewShader();
+	//NewShader();
 }
 
 void CodeNotebook::NewShader()
 {	
-	CodeEditor* codePage = new CodeEditor(this, m_strStartCode);
+	wxString templateCode = LoadCodeFromFile(TEMPLATE_PATH);
+
+	CodeEditor* codePage = new CodeEditor(this, templateCode);
 	wxString pageName = wxString::Format("Shader %d", (int)GetPageCount() + 1);
 	codePage->SetName(pageName);
 
@@ -162,24 +164,31 @@ bool CodeNotebook::OpenShader()
 
 	wxString path = openFileDlg.GetPath();
 
+	wxString fileContent = LoadCodeFromFile(path);	
+
+	AddShader(openFileDlg.GetFilename(), fileContent, path);
+
+	return true;
+}
+
+wxString CodeNotebook::LoadCodeFromFile(wxString path)
+{
 	std::ifstream inputFile(path.ToStdString());
 
 	if (!inputFile.good())
 	{
 		wxLogError("Failed opening file '%s'.", path);
-		return false;
+		return "";
 	}
 
 	std::string fileContent = "";
 	std::stringstream inputStream;
-	
+
 	inputStream << inputFile.rdbuf();
 	inputFile.close();
 
 	fileContent = inputStream.str();
 
-	AddShader(openFileDlg.GetFilename(), fileContent, path);
-
-	return true;
+	return fileContent;
 }
 
