@@ -3,7 +3,13 @@
 CodeEditor::CodeEditor(wxWindow* parent, wxString text) :
 	wxStyledTextCtrl(parent, wxID_ANY, wxDefaultPosition, {700, 500})
 {
-	StyleClearAll();
+	StyleSetBackground(wxSTC_STYLE_DEFAULT, wxColor(0x202020));
+	StyleSetForeground(wxSTC_STYLE_DEFAULT, wxColor(0xDDDDDD));
+	StyleSetBold(wxSTC_STYLE_DEFAULT, true);
+	SetSelBackground(true, wxColor(0x505050));
+	SetCaretForeground(wxColor(0xDDDDDD));
+	SetCaretWidth(3);
+	StyleClearAll(); //clear all except the default
 
 	SetLexer(wxSTC_LEX_CPP);
 
@@ -19,12 +25,12 @@ CodeEditor::CodeEditor(wxWindow* parent, wxString text) :
 	StyleSetBold(wxSTC_C_WORD, true);
 	StyleSetBold(wxSTC_C_WORD2, true);
 
-	//StyleSetBackground(wxSTC_STYLE_DEFAULT, wxColor(100, 100, 100));
 	StyleSetForeground(wxSTC_C_PREPROCESSOR, wxColour(165, 105, 0));
-	StyleSetForeground(wxSTC_C_IDENTIFIER, wxColour(40, 0, 60));
-	StyleSetForeground(wxSTC_C_NUMBER, wxColour(0, 150, 0));
+	StyleSetForeground(wxSTC_C_IDENTIFIER, wxColour(0x88D8B0));
+	StyleSetForeground(wxSTC_C_NUMBER, wxColour(0xADEEFF));
 	StyleSetForeground(wxSTC_C_WORD, wxColour(150, 50, 50));
-	StyleSetForeground(wxSTC_C_WORD2, wxColour(150, 150, 0));
+	//StyleSetForeground(wxSTC_C_WORD2, wxColour(150, 150, 0));
+	StyleSetForeground(wxSTC_C_WORD2, wxColour(0x5cccff));
 	StyleSetForeground(wxSTC_C_COMMENT, wxColour(150, 150, 150));
 	StyleSetForeground(wxSTC_C_COMMENTLINE, wxColour(150, 150, 150));
 
