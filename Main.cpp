@@ -43,6 +43,9 @@ public:
 
 private:
 	void OnNew(wxCommandEvent& event);
+	void OnOpen(wxCommandEvent& event);
+	void OnSaveAs(wxCommandEvent& event);
+	void OnSave(wxCommandEvent& event);
 	void OnExit(wxCommandEvent& event);
 	void OnAbout(wxCommandEvent& event);
 
@@ -72,6 +75,9 @@ private:
 enum
 {
 	ID_New = 1,
+	ID_SaveAs,
+	ID_Save,
+	ID_Open,
 	ID_StartAudio,
 	ID_AudioLevelTimer,
 	ID_BtnCompile,
@@ -120,7 +126,10 @@ ASFrame::ASFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
 {
 	//Menu setup
 	wxMenu* menuFile = new wxMenu;
-	menuFile->Append(ID_New, "&New...\tCtrl-N", "New audio visualization.");
+	menuFile->Append(ID_New, _("&New\tCtrl-N"), _("New audio visualization."));
+	menuFile->Append(ID_Open, _("&Open...\tCtrl-O"), _("Open a shader file from the disk"));
+	menuFile->Append(ID_Save, _("&Save\tCtrl-S"));
+	menuFile->Append(ID_SaveAs, _("Save As..."));
 	menuFile->AppendSeparator();
 	menuFile->Append(wxID_EXIT);
 
@@ -128,8 +137,8 @@ ASFrame::ASFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
 	menuHelp->Append(wxID_ABOUT);
 
 	wxMenuBar* menuBar = new wxMenuBar;
-	menuBar->Append(menuFile, "&File");
-	menuBar->Append(menuHelp, "&Help");
+	menuBar->Append(menuFile, _("&File"));
+	menuBar->Append(menuHelp, _("&Help"));
 
 	SetMenuBar(menuBar);
 
@@ -140,6 +149,9 @@ ASFrame::ASFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
 	Bind(wxEVT_MENU, &ASFrame::OnAbout, this, wxID_ABOUT);
 
 	Bind(wxEVT_MENU, &ASFrame::OnNew, this, ID_New);
+	Bind(wxEVT_MENU, &ASFrame::OnOpen, this, ID_Open);
+	Bind(wxEVT_MENU, &ASFrame::OnSaveAs, this, ID_SaveAs);
+	Bind(wxEVT_MENU, &ASFrame::OnSave, this, ID_Save);
 
 	//
 	wxBoxSizer* bottomSizer = new wxBoxSizer(wxVERTICAL);
@@ -327,7 +339,22 @@ void ASFrame::CompileShader(wxCommandEvent& event)
 
 void ASFrame::OnNew(wxCommandEvent& event)
 {
-	//TODO: IMPLEMENT
+	codeNotebook->NewShader();
+}
+
+void ASFrame::OnOpen(wxCommandEvent& event)
+{
+	codeNotebook->OpenShader();
+}
+
+void ASFrame::OnSaveAs(wxCommandEvent& event)
+{
+	codeNotebook->SaveShader(true);
+}
+
+void ASFrame::OnSave(wxCommandEvent& event)
+{
+	codeNotebook->SaveShader();
 }
 
 

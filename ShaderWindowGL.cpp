@@ -74,7 +74,6 @@ void ShaderWindowGL::Render(wxTimerEvent& event)
 
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //glViewport(0, 0, (GLint)GetSize().x, (GLint)GetSize().y);
     Prep2DViewport(0, 0, GetWidth(), GetHeight());
 
     //shader uniforms

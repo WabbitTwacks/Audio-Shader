@@ -27,7 +27,13 @@ class CodeEditor : public wxStyledTextCtrl
 public:
 	CodeEditor(wxWindow* parent, wxString text);
 
+	void SetName(wxString name) { m_strName = name; }
+	wxString GetName() { return m_strName; }
+	void SetPath(wxString path) { m_filePath = path; }
+	wxString GetPath() { return m_filePath; }
+
 private:
 	void MouseDown(wxStyledTextEvent& event);
-
+	wxString m_strName = "";
+	wxString m_filePath = "";
 };

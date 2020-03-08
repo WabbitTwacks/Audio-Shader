@@ -1,7 +1,8 @@
-//#include <string>
-
 #include <wx/tokenzr.h>
 #include <wx/regex.h>
+#include <fstream>
+#include <string>
+#include <sstream>
 
 #include "CodeNotebook.h"
 
@@ -16,7 +17,19 @@ CodeNotebook::CodeNotebook(wxWindow* parent, wxWindowID id, const wxPoint& pos, 
 void CodeNotebook::NewShader()
 {	
 	CodeEditor* codePage = new CodeEditor(this, m_strStartCode);
-	AddPage(codePage, "Shader 1");
+	wxString pageName = wxString::Format("Shader %d", (int)GetPageCount() + 1);
+	codePage->SetName(pageName);
+
+	AddPage(codePage, pageName, true);
+}
+
+void CodeNotebook::AddShader(wxString name, wxString content, wxString path)
+{
+	CodeEditor* codePage = new CodeEditor(this, content);
+	codePage->SetName(name);
+	codePage->SetPath(path);
+
+	AddPage(codePage, name, true);
 }
 
 wxString CodeNotebook::GetCurrentCode()
@@ -94,5 +107,79 @@ void CodeNotebook::ClearErrors()
 	{
 		pCE->MarkerDeleteAll(CE_MARKER_ERROR);
 	}
+}
+
+bool CodeNotebook::SaveShader(bool saveAs)
+{
+	CodeEditor* pCE = (CodeEditor*)GetPage(GetSelection());
+
+	if (!pCE)
+		return false;
+
+	wxString path = "./shaders/";
+
+	if (saveAs || pCE->GetPath() == "")
+	{
+		wxFileDialog saveFileDlg(this, _("Save shader"), path, "", "FRAG files (*.frag)|*.frag",
+			wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+
+		if (saveFileDlg.ShowModal() == wxID_CANCEL)
+			return false;
+
+		path = saveFileDlg.GetPath();
+
+		pCE->SetName(saveFileDlg.GetFilename());
+		pCE->SetPath(path);
+		SetPageText(GetSelection(), pCE->GetName());
+	}
+	else
+	{
+		path = pCE->GetPath();
+	}
+
+	std::ofstream outputStream(path.ToStdString());
+
+	if ((outputStream.rdstate() & std::ofstream::failbit))
+	{
+		wxLogError("Failed saving to file '%s'.", path);
+		return false;
+	}
+	
+	outputStream << pCE->GetText().ToStdString();
+	outputStream.flush();
+	outputStream.close();
+
+	return true;
+}
+
+bool CodeNotebook::OpenShader()
+{
+	wxFileDialog openFileDlg(this, _("Open .FRAG file"), "./shaders/", "", "FRAG files (*.frag)|*.frag",
+								wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+
+	if (openFileDlg.ShowModal() == wxID_CANCEL)
+		return false;
+
+	wxString path = openFileDlg.GetPath();
+
+	std::ifstream inputFile(path.ToStdString());
+
+	if (!inputFile.good())
+	{
+		wxLogError("Failed opening file '%s'.", path);
+		return false;
+	}
+
+	std::string fileContent = "";
+	std::stringstream inputStream;
+	
+	inputStream << inputFile.rdbuf();
+	inputFile.close();
+
+	fileContent = inputStream.str();
+
+	AddShader(openFileDlg.GetFilename(), fileContent, path);
+
+	return true;
 }
 

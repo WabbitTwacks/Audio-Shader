@@ -12,12 +12,15 @@ public:
 	CodeNotebook(wxWindow *parent, wxWindowID id = -1, const wxPoint &pos = wxDefaultPosition, const wxSize &size = wxDefaultSize);
 
 	void NewShader();
+	void AddShader(wxString name, wxString content, wxString path);
 
 	wxString GetCurrentCode();
 	void ShowErrors(wxString errorString);
 	wxString GetError(int n);
 	wxString GetErrorOnLine(int l);
 	void ClearErrors();
+	bool SaveShader(bool saveAs = false);
+	bool OpenShader();
 
 private:
 
