@@ -37,7 +37,7 @@ CodeEditor::CodeEditor(wxWindow* parent, wxString text) :
 	IndicatorSetStyle(CE_IND_ERROR, wxSTC_INDIC_SQUIGGLELOW);
 	IndicatorSetForeground(CE_IND_ERROR, wxColor(0x0000DD));
 
-	SetEdgeColumn(80);
+	SetEdgeColumn(CE_EDGE);
 	SetEdgeMode(wxSTC_EDGE_LINE);
 
 	SetText(text);

@@ -3,6 +3,8 @@
 #include <wx/wx.h>
 #include <wx/stc/stc.h>
 
+#define CE_EDGE 128
+
 wxDECLARE_EVENT(EVENT_SEL_LINE, wxCommandEvent);
 
 enum
