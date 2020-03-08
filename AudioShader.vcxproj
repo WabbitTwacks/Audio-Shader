@@ -175,6 +175,7 @@
     <ClInclude Include="AudioSink.h" />
     <ClInclude Include="CodeEditor.h" />
     <ClInclude Include="CodeNotebook.h" />
+    <ClInclude Include="DSP.h" />
     <ClInclude Include="ShaderWindowGL.h" />
     <ClInclude Include="Wave.h" />
   </ItemGroup>
