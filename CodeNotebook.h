@@ -2,6 +2,7 @@
 
 #include <wx/notebook.h>
 #include <vector>
+#include <map>
 
 #include "CodeEditor.h"
 
@@ -13,8 +14,15 @@ public:
 	void NewShader();
 
 	wxString GetCurrentCode();
+	void ShowErrors(wxString errorString);
+	wxString GetError(int n);
+	wxString GetErrorOnLine(int l);
+	void ClearErrors();
 
 private:
+
+	std::vector<wxString> m_errorList;
+	std::map<int, int> m_mapLineToError;
 	 
 	std::string m_strStartCode =
 		"#version 330 core\n"

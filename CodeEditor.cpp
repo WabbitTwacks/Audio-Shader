@@ -6,11 +6,13 @@ CodeEditor::CodeEditor(wxWindow* parent, wxString text) :
 	StyleClearAll();
 
 	SetLexer(wxSTC_LEX_CPP);
+
+	//SendMsg(wxSTC_STYLESET, )
 	
-	SetMarginWidth(MARGIN_LINE_NUMBERS, 50);
+	SetMarginWidth(CE_MARGIN_LINE_NUMBERS, 50);
 	StyleSetForeground(wxSTC_STYLE_LINENUMBER, wxColour(75, 75, 75));
 	StyleSetBackground(wxSTC_STYLE_LINENUMBER, wxColour(220, 220, 220));
-	SetMarginType(MARGIN_LINE_NUMBERS, wxSTC_MARGIN_NUMBER);
+	SetMarginType(CE_MARGIN_LINE_NUMBERS, wxSTC_MARGIN_NUMBER);
 
 	SetWrapMode(wxSTC_WRAP_NONE);	
 
@@ -30,5 +32,29 @@ CodeEditor::CodeEditor(wxWindow* parent, wxString text) :
 	SetKeyWords(1, wxT("const int float void vec2 vec3 vec4 ivec2 ivec3 ivec4 bvec2 bvec3 bvec4"
 						"uvec2 uvec3 uvec4 dvec2 dvec3 dvec4 mat2 mat3 mat4"));
 
+	MarkerSetBackground(CE_MARKER_ERROR, wxColor(0x0000DD));
+
+	IndicatorSetStyle(CE_IND_ERROR, wxSTC_INDIC_SQUIGGLELOW);
+	IndicatorSetForeground(CE_IND_ERROR, wxColor(0x0000DD));
+
+	SetEdgeColumn(80);
+	SetEdgeMode(wxSTC_EDGE_LINE);
+
 	SetText(text);
+
+	Bind(wxEVT_STC_UPDATEUI, &CodeEditor::MouseDown, this, wxID_ANY);
+}
+
+void CodeEditor::MouseDown(wxStyledTextEvent& event)
+{
+	if (event.GetUpdated() & wxSTC_UPDATE_SELECTION)
+	{
+		wxCommandEvent e(EVENT_SEL_LINE, GetId());
+		e.SetEventObject(this);
+		e.SetInt(GetCurrentLine());
+
+		ProcessWindowEvent(e);		
+	}	
+
+	event.Skip();
 }

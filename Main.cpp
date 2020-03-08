@@ -10,6 +10,7 @@
 #define MIN_SHADER_HEIGHT 450
 
 #define _CRTDBG_MAP_ALLOC
+
 #include <stdlib.h>
 #include <crtdbg.h>
 #include <string>
@@ -20,6 +21,8 @@
 #include "ShaderWindowGL.h"
 #include "CodeEditor.h"
 #include "CodeNotebook.h"
+
+wxDEFINE_EVENT(EVENT_SEL_LINE, wxCommandEvent);
 
 class ASApp : public wxApp
 {
@@ -43,6 +46,8 @@ private:
 	void OnExit(wxCommandEvent& event);
 	void OnAbout(wxCommandEvent& event);
 
+	void OnLineSelected(wxCommandEvent& event);
+
 	void OnAudioStart(wxCommandEvent& event);
 	void GetAudioLevels(wxTimerEvent& event);
 
@@ -53,6 +58,7 @@ private:
 
 	ShaderWindowGL* glShader;
 	CodeNotebook* codeNotebook;
+	wxStaticText* errorLog;
 
 	std::string strStartCode =
 		"#version 330 core\n"
@@ -68,7 +74,8 @@ enum
 	ID_New = 1,
 	ID_StartAudio,
 	ID_AudioLevelTimer,
-	ID_BtnCompile
+	ID_BtnCompile,
+	ID_ErrorLogShader
 };
 
 wxIMPLEMENT_APP(ASApp);
@@ -162,8 +169,25 @@ ASFrame::ASFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
 	codeNotebook = new CodeNotebook(this, wxID_ANY, wxDefaultPosition, { MIN_SHADER_WIDTH, MIN_SHADER_HEIGHT });	
 
 	wxBoxSizer* notebookSizer = new wxBoxSizer(wxVERTICAL);
+	wxBoxSizer* notebookBottomSizer = new wxBoxSizer(wxHORIZONTAL);
 	notebookSizer->Add(codeNotebook, 1, wxEXPAND);
-	notebookSizer->Add(new wxButton(this, ID_BtnCompile, "Compile && Run", wxDefaultPosition, { 128, 25 }),
+
+	//bottom of code notebook
+	notebookBottomSizer->Add(new wxButton(this, ID_BtnCompile, "Compile && Run", wxDefaultPosition, { 128, 25 }),
+		0, wxSHRINK | wxALL,
+		0
+	);
+	
+	errorLog = new wxStaticText(this, ID_ErrorLogShader, "", wxDefaultPosition, { 300, 25 });
+	errorLog->SetForegroundColour(wxColor(0x0000FF));
+
+	notebookBottomSizer->Add(
+		errorLog,
+		0, wxEXPAND | wxLEFT | wxRIGHT,
+		5
+	);
+
+	notebookSizer->Add(notebookBottomSizer,
 		0, wxSHRINK | wxALL,
 		0
 	);
@@ -190,6 +214,9 @@ ASFrame::ASFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
 	Bind(wxEVT_TIMER, &ASFrame::GetAudioLevels, this, ID_AudioLevelTimer);
 	timerAudioLevel->Start(100);
 
+	//bind event to get events from selected lines in the code editor
+	Bind(EVENT_SEL_LINE, &ASFrame::OnLineSelected, this, wxID_ANY);
+
 	//test shader compilation
 	glShader->SetAndCompileShader(strStartCode.c_str());
 }
@@ -203,6 +230,15 @@ void ASFrame::OnAbout(wxCommandEvent& event)
 {
 	wxMessageBox(	"This is an audio visualizer that uses GLSL fragment shaders.",
 					"About Audio Shader", wxOK | wxICON_INFORMATION);
+}
+
+void ASFrame::OnLineSelected(wxCommandEvent& event)
+{
+	int line = event.GetInt();
+
+	//OutputDebugStringA(wxString::Format("SELECTED LINE: %d\n", line));
+
+	errorLog->SetLabel(codeNotebook->GetErrorOnLine(line));
 }
 
 void ASFrame::OnAudioStart(wxCommandEvent& event)
@@ -273,7 +309,17 @@ void ASFrame::GetAudioLevels(wxTimerEvent& event)
 
 void ASFrame::CompileShader(wxCommandEvent& event)
 {
-	glShader->SetAndCompileShader( 	codeNotebook->GetCurrentCode() );
+	codeNotebook->ClearErrors();
+
+	if (!glShader->SetAndCompileShader(codeNotebook->GetCurrentCode()))
+	{
+		codeNotebook->ShowErrors(glShader->GetErrorLog());
+		errorLog->SetLabel(codeNotebook->GetError(0));
+	}
+	else
+	{
+		errorLog->SetLabel("");
+	}
 }
 
 void ASFrame::OnNew(wxCommandEvent& event)

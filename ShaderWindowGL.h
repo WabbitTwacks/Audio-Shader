@@ -20,6 +20,7 @@ class ShaderWindowGL : public wxGLCanvas
 	char* m_fragShaderSource = nullptr;
 	unsigned int m_fragmentShader = 0;
 	unsigned int m_shaderProgram = 0;
+	wxString m_errorLog = "";
 
 	PFNGLCREATEPROGRAMPROC glCreateProgram;
 	PFNGLCREATESHADERPROC glCreateShader;
@@ -59,4 +60,6 @@ public:
 	bool SetAndCompileShader(wxString);
 
 	void Prep2DViewport(int topleftX, int topleftY, int bottomrightX, int bottomrightY);
+
+	wxString GetErrorLog() { return m_errorLog; }
 };

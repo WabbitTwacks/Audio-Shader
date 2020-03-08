@@ -92,16 +92,6 @@ void ShaderWindowGL::Render(wxTimerEvent& event)
         glVertex3f(0, GetHeight(), 0);
     glEnd();
 
-    // square
-    /*float green = (sin(m_time) + 1.0f) * 0.5f;
-    glColor4f(0.5, green, 0.1f, 1);
-    glBegin(GL_QUADS);
-        glVertex3f(GetWidth() / 4, GetHeight() / 3, 0);
-        glVertex3f(GetWidth() * 3 / 4, GetHeight() / 3, 0);
-        glVertex3f(GetWidth() * 3 / 4, GetHeight() * 2 / 3, 0);
-        glVertex3f(GetWidth() / 4, GetHeight() * 2 / 3, 0);
-    glEnd();*/
-
     glFlush();
     SwapBuffers();
 }
@@ -176,6 +166,8 @@ bool ShaderWindowGL::CompileShader()
         char* errorLog = new char[length];
         glGetShaderInfoLog(m_fragmentShader, length, NULL, errorLog);
 
+        m_errorLog = errorLog;
+
         //return to somewhere
         OutputDebugString(L"ERROR::SHADER COMPILATION\n");
         OutputDebugStringA(errorLog);
@@ -197,6 +189,8 @@ bool ShaderWindowGL::CompileShader()
         glGetProgramiv(m_shaderProgram, GL_INFO_LOG_LENGTH, &length);
         char* errorLog = new char[length];
         glGetProgramInfoLog(m_shaderProgram, 512, NULL, errorLog);
+
+        m_errorLog = errorLog;
 
         //return to somewhere
         OutputDebugString(L"ERROR::SHADER LINKING\n");
