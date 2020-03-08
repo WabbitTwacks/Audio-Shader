@@ -236,8 +236,6 @@ void ASFrame::OnLineSelected(wxCommandEvent& event)
 {
 	int line = event.GetInt();
 
-	//OutputDebugStringA(wxString::Format("SELECTED LINE: %d\n", line));
-
 	errorLog->SetLabel(codeNotebook->GetErrorOnLine(line));
 }
 
