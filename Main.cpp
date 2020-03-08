@@ -296,6 +296,11 @@ void ASFrame::GetAudioLevels(wxTimerEvent& event)
 
 		dLevel /= nChannels;
 
+		//send the audio level to the shader
+		glShader->SetAudioLevel(dLevel);
+		OutputDebugStringA(wxString::Format("AUDIO LEVEL: %f\n", dLevel));
+
+		//show the dBFS level in the audio panel
 		double dB = (dLevel > 0) ? (20 * log10(dLevel)) : (-1000000);
 
 		textAudioLevel->SetLabel(wxString::Format("%.2f dB", dB));

@@ -8,6 +8,8 @@
 class ShaderWindowGL : public wxGLCanvas
 {
 	void Render(wxTimerEvent& event);
+	void Resized(wxSizeEvent& event);
+	void Prep2DViewport(int topleftX, int topleftY, int bottomrightX, int bottomrightY);
 	void* GetFuncAddress(const char* name);
 
 	wxGLContext* m_context;
@@ -16,6 +18,8 @@ class ShaderWindowGL : public wxGLCanvas
 	wxTimer* m_renderTimer;
 
 	float m_time = 0; //time from shader start in seconds
+
+	float m_audioLevel = 0.0;
 
 	char* m_fragShaderSource = nullptr;
 	unsigned int m_fragmentShader = 0;
@@ -47,8 +51,6 @@ public:
 	ShaderWindowGL(wxWindow* parent, int *args);
 	virtual ~ShaderWindowGL();	
 
-	void Resized(wxSizeEvent& event);
-
 	int GetWidth();
 	int GetHeight();
 
@@ -59,7 +61,7 @@ public:
 	bool SetAndCompileShader(const char* shaderSource);
 	bool SetAndCompileShader(wxString);
 
-	void Prep2DViewport(int topleftX, int topleftY, int bottomrightX, int bottomrightY);
+	void SetAudioLevel(float fLevel);
 
 	wxString GetErrorLog() { return m_errorLog; }
 };

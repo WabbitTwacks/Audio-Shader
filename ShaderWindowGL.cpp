@@ -80,12 +80,14 @@ void ShaderWindowGL::Render(wxTimerEvent& event)
     //shader uniforms
     int iTime = glGetUniformLocation(m_shaderProgram, "iTime");
     int iResolution = glGetUniformLocation(m_shaderProgram, "iResolution");
+    int iAudioLevelAvg = glGetUniformLocation(m_shaderProgram, "iAudioLevelAvg");
     glUniformf(iTime, m_time);
     glUniform2f(iResolution, GetWidth(), GetHeight());
+    glUniformf(iAudioLevelAvg, m_audioLevel);
 
     //background
     glColor4f(0.4, 0.1, 0.9, 1);
-        glBegin(GL_QUADS);
+    glBegin(GL_QUADS);
         glVertex3f(0, 0, 0);
         glVertex3f(GetWidth(), 0, 0);
         glVertex3f(GetWidth(), GetHeight(), 0);
@@ -217,6 +219,14 @@ bool ShaderWindowGL::SetAndCompileShader(wxString shaderSource)
 {
     SetShaderSource(shaderSource);
     return CompileShader();
+}
+
+void ShaderWindowGL::SetAudioLevel(float fLevel)
+{
+    if (fLevel > 1.0)
+        fLevel = 1.0;
+
+    m_audioLevel = fLevel;
 }
 
 void ShaderWindowGL::Prep2DViewport(int topleftX, int topleftY, int bottomrightX, int bottomrightY)
