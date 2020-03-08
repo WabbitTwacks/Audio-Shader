@@ -20,13 +20,13 @@ void main()
 	level = (level - minLevel) * 1./(0. - minLevel); 
 
 	//draw a circle and animate it with the audio level
-	float r = .1 + .5 * level*level;
+	float r = .1 + .4 * level;
 	float blur = .01;
 	
 	float d = length(UV);
 	d = 1. - smoothstep(r, r+blur, d);
 
-	c = mix(c2, c, iAudioLevelAvg*10.);
+	c = mix(c2, c, level*level*5.);
 	c *= d;
 	
 	//output 
