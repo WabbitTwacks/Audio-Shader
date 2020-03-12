@@ -18,8 +18,9 @@ class ShaderWindowGL : public wxGLCanvas
 	wxTimer* m_renderTimer;
 
 	float m_time = 0; //time from shader start in seconds
-
 	float m_audioLevel = 0.0;
+	unsigned int m_audioSampler = 0;
+	float* m_audioData = nullptr;
 
 	char* m_fragShaderSource = nullptr;
 	unsigned int m_fragmentShader = 0;
@@ -44,8 +45,23 @@ class ShaderWindowGL : public wxGLCanvas
 	PFNGLUNIFORM2FPROC glUniform2f;
 	PFNGLUNIFORM3FPROC glUniform3f;
 	PFNGLUNIFORM4FPROC glUniform4f;
+	PFNGLUNIFORM1IPROC glUniform1i;
 	PFNGLUNIFORM2IPROC glUniform2i;
 	PFNGLGETSTRINGIPROC glGetStringi;
+	PFNGLGENERATEMIPMAPPROC glGenerateMipmap;
+	PFNGLACTIVETEXTUREPROC glActiveTexture;
+	PFNGLUNIFORM1FVPROC glUniform1fv;
+
+	std::string m_vertexSource =
+		"#version 330 core\n"
+		"layout (location = 0) in vec3 aPos;\n"
+		"layout (location = 1) in vec3 aColor;\n"
+		"layout (location = 2) in vec2 aTexCoord;\n\n"
+		"out vec2 TexCoord\n\n"
+		"void main(){\n"
+			"glPosition = ftransform();\n"
+			"gl_Texcoord[0] = gl_MultiTexCoord0;\n"
+		"}\0";
 
 public:
 	ShaderWindowGL(wxWindow* parent, int *args);
@@ -62,6 +78,8 @@ public:
 	bool SetAndCompileShader(wxString);
 
 	void SetAudioLevel(float fLevel);
+
+	bool GenerateAudioSampler(float* data, int size);
 
 	wxString GetErrorLog() { return m_errorLog; }
 };

@@ -19,6 +19,7 @@ HRESULT AudioSink::SetFormat(WAVEFORMATEX* pwfx)
 
 	nBufferSize = wfx.nSamplesPerSec * wfx.nBlockAlign;
 	pBuffer = new BYTE[nBufferSize];
+	memset(pBuffer, 0, nBufferSize);
 	nBufferPos = 0;
 
 	wavFile.Init(wfx.nChannels, wfx.nSamplesPerSec, wfx.nAvgBytesPerSec, wfx.nBlockAlign, wfx.wBitsPerSample);
@@ -59,6 +60,7 @@ HRESULT AudioSink::CopyData(BYTE* pData, UINT32 numFramesAvailable, BOOL* bDone)
 			pBuffer[nBufferPos] = 0;
 		}
 
+		const std::lock_guard<std::mutex> lock(mtxBuffPos);
 		nBufferPos++;
 		nBufferPos %= nBufferSize;
 	}
@@ -71,7 +73,7 @@ uint32_t AudioSink::GetFramesCount()
 	return numFrames.load();
 }
 
-void AudioSink::GetBuffer(uint8_t* pReadBuff, uint32_t nFrames)
+void AudioSink::GetUnreadBuffer(uint8_t* pReadBuff, uint32_t nFrames)
 {
 	if (numFrames.load() < nFrames)
 		nFrames = numFrames.load();
@@ -84,12 +86,12 @@ void AudioSink::GetBuffer(uint8_t* pReadBuff, uint32_t nFrames)
 	uint32_t nDataSize = nFrames * wfx.nBlockAlign;
 
 	//memcpy_s(pReadBuff, nDataSize, pBuffer, nDataSize);
-	uint32_t nBuffReadPos = 0;
-	uint32_t nUnreadData = numFrames.load() * wfx.nBlockAlign;
-	if (nBufferPos >= nUnreadData)
-		nBuffReadPos = nBufferPos - nUnreadData;
-	else
-		nBuffReadPos = nUnreadData - nBufferPos;
+	int32_t nBuffReadPos = 0;
+	int32_t nUnreadData = numFrames.load() * wfx.nBlockAlign;
+	
+	std::unique_lock<std::mutex> lockPos(mtxBuffPos);
+	nBuffReadPos = (nBufferSize + (nBufferPos - nUnreadData)) % nBufferSize;
+	lockPos.unlock();
 
 	for (int i = 0; i < nDataSize; i++)
 	{
@@ -103,4 +105,30 @@ void AudioSink::GetBuffer(uint8_t* pReadBuff, uint32_t nFrames)
 
 	if (numFrames < 0)
 		numFrames = 0;
+}
+
+void AudioSink::GetLastFrames(uint8_t* pReadBuff, uint32_t nFrames)
+{
+	if (nFrames < 1)
+		return;
+
+	if (nFrames > nBufferSize / wfx.nBlockAlign)
+		nFrames = nBufferSize / wfx.nBlockAlign;
+
+	int32_t nBufferReadPos = 0;
+	int32_t nToRead = nFrames * wfx.nBlockAlign;
+
+	std::unique_lock<std::mutex> lockPos(mtxBuffPos);
+	nBufferReadPos = (nBufferSize + (nBufferPos - nToRead)) % nBufferSize;
+	lockPos.unlock();
+
+	const std::lock_guard<std::mutex> lock(mtxBuffer);
+
+	for (int i = 0; i < nToRead; i++)
+	{
+		pReadBuff[i] = pBuffer[nBufferReadPos];
+
+		nBufferReadPos++;
+		nBufferReadPos %= nBufferSize;
+	}
 }

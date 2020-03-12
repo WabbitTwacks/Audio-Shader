@@ -4,7 +4,7 @@
 	#include <wx/wx.h>
 #endif
 
-#define RMS_MIN_SAMPLES 480
+#define RMS_MIN_SAMPLES 512
 
 #define MIN_SHADER_WIDTH 800
 #define MIN_SHADER_HEIGHT 450
@@ -53,12 +53,14 @@ private:
 
 	void OnAudioStart(wxCommandEvent& event);
 	void GetAudioLevels(wxTimerEvent& event);
+	void ShowAudioInfo(wxTimerEvent& event);
 
 	void OnCompileShader(wxCommandEvent& event);
 
 	void CompileShader();
 
-	wxTimer *timerAudioLevel;
+	wxTimer *timerAudioData;
+	wxTimer* timerAudioPanel;
 	wxStaticText* textAudioLevel;
 
 	ShaderWindowGL* glShader;
@@ -73,7 +75,8 @@ enum
 	ID_Save,
 	ID_Open,
 	ID_StartAudio,
-	ID_AudioLevelTimer,
+	ID_AudioDataTimer,
+	ID_AudioPanelTimer,
 	ID_BtnCompile,
 	ID_ErrorLogShader
 };
@@ -216,9 +219,13 @@ ASFrame::ASFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
 	
 	SetSizerAndFit(bottomSizer); 
 
-	timerAudioLevel = new wxTimer(this, ID_AudioLevelTimer);
-	Bind(wxEVT_TIMER, &ASFrame::GetAudioLevels, this, ID_AudioLevelTimer);
-	timerAudioLevel->Start(100);
+	timerAudioData = new wxTimer(this, ID_AudioDataTimer);
+	Bind(wxEVT_TIMER, &ASFrame::GetAudioLevels, this, ID_AudioDataTimer);
+	timerAudioData->Start(50);  //50ms looks pretty good. 100ms starts to look too unresponsive.
+
+	timerAudioPanel = new wxTimer(this, ID_AudioPanelTimer);
+	Bind(wxEVT_TIMER, &ASFrame::ShowAudioInfo, this, ID_AudioPanelTimer);
+	timerAudioPanel->Start(100);
 
 	//bind event to get events from selected lines in the code editor
 	Bind(EVENT_SEL_LINE, &ASFrame::OnLineSelected, this, wxID_ANY);
@@ -271,7 +278,12 @@ void ASFrame::GetAudioLevels(wxTimerEvent& event)
 		uint32_t nDataSize = nFrames * pApp->audioSink->GetFrameSize();
 
 		uint8_t* pAudioData = new uint8_t[nDataSize];
-		pApp->audioSink->GetBuffer(pAudioData, nFrames);
+		pApp->audioSink->GetUnreadBuffer(pAudioData, nFrames);
+		//pApp->audioSink->GetLastFrames(pAudioData, 512);
+		//nFrames = 512;
+
+		float* pAudioDataMono = new float[512];
+		memset(pAudioDataMono, 0, sizeof(float) * 512);
 
 		uint16_t nRMSSize = nFrames * nChannels;
 		uint8_t nSampleSize = pApp->audioSink->GetFrameSize() / nChannels;
@@ -289,7 +301,21 @@ void ASFrame::GetAudioLevels(wxTimerEvent& event)
 			uint8_t channel = i % nChannels;
 			
 			pRMS[channel] += *sample * *sample;
+
+			if (i < 1024)
+			{
+				if (channel == 0)
+					pAudioDataMono[i / 2] = *sample;
+				else
+				{
+					pAudioDataMono[i / 2] += *sample;
+					pAudioDataMono[i / 2] /= 2.0;
+				}
+			}
 		}
+
+		//generate a 'texture' to sample the audio data from
+		glShader->GenerateAudioSampler(pAudioDataMono, 512);
 
 		double dLevel = 0;
 
@@ -305,16 +331,60 @@ void ASFrame::GetAudioLevels(wxTimerEvent& event)
 
 		//send the audio level to the shader
 		glShader->SetAudioLevel(dLevel);
-		OutputDebugStringA(wxString::Format("AUDIO LEVEL: %f\n", dLevel));
 
 		//show the dBFS level in the audio panel
-		double dB = (dLevel > 0) ? (20 * log10(dLevel)) : (-1000000);
+		/*double dB = (dLevel > 0) ? (20 * log10(dLevel)) : (-1000000);
 
-		textAudioLevel->SetLabel(wxString::Format("%.2f dB", dB));
+		textAudioLevel->SetLabel(wxString::Format("%.2f dB Frames: %d", dB, nFrames));*/
 
 		delete[] pAudioData;
 		delete[] pRMS;
+		delete[] pAudioDataMono;
 	}
+}
+
+void ASFrame::ShowAudioInfo(wxTimerEvent& event)
+{
+	if (!pApp->audioCapture->isActive())
+		return;
+
+	//get average audio levels and display them on the Audio Panel
+	uint64_t nNumFrames = pApp->audioSink->GetSampleRate() / 10;
+	uint8_t nChannels = pApp->audioSink->GetChannels();
+	uint64_t nNumSamples = nNumFrames * nChannels;
+
+	float* pAudioData = new float[nNumSamples];
+	pApp->audioSink->GetLastFrames(pAudioData, nNumFrames);
+
+	double* fRMS = new double[nChannels];
+	memset(fRMS, 0, sizeof(double) * nChannels);
+
+	for (int i = 0; i < nNumSamples; i++)
+	{
+		int channel = i % nChannels;
+
+		fRMS[channel] += (double)pAudioData[i] * pAudioData[i];
+	}
+
+	double dLevel = 0.01;
+
+	for (int i = 0; i < nChannels; i++)
+	{
+		fRMS[i] /= nNumFrames;
+		fRMS[i] = sqrt(fRMS[i]);
+
+		dLevel += fRMS[i];
+	}
+
+	dLevel /= nChannels;
+
+	//show the dBFS level in the audio panel
+	double dB = (dLevel > 0.0) ? (20 * log10(dLevel)) : (-1000000);
+
+	textAudioLevel->SetLabel(wxString::Format("%.2f dB", dB));
+
+	delete[] fRMS;
+	delete[] pAudioData;
 }
 
 void ASFrame::OnCompileShader(wxCommandEvent& event)
