@@ -278,9 +278,9 @@ void ASFrame::GetAudioLevels(wxTimerEvent& event)
 		uint32_t nDataSize = nFrames * pApp->audioSink->GetFrameSize();
 
 		uint8_t* pAudioData = new uint8_t[nDataSize];
-		pApp->audioSink->GetUnreadBuffer(pAudioData, nFrames);
-		//pApp->audioSink->GetLastFrames(pAudioData, 512);
-		//nFrames = 512;
+		//pApp->audioSink->GetUnreadBuffer(pAudioData, nFrames);
+		pApp->audioSink->GetLastFrames(pAudioData, 512);
+		nFrames = 512;
 
 		float* pAudioDataMono = new float[512];
 		memset(pAudioDataMono, 0, sizeof(float) * 512);
@@ -366,7 +366,7 @@ void ASFrame::ShowAudioInfo(wxTimerEvent& event)
 		fRMS[channel] += (double)pAudioData[i] * pAudioData[i];
 	}
 
-	double dLevel = 0.01;
+	double dLevel = 0.0;
 
 	for (int i = 0; i < nChannels; i++)
 	{

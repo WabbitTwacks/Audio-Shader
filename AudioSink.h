@@ -16,7 +16,7 @@ public:
 	HRESULT SetFormat(WAVEFORMATEX* pwfx);
 	HRESULT CopyData(BYTE *pData, UINT32 numFramesAvailable, BOOL *bDone);
 
-	uint32_t GetFramesCount();
+	int32_t GetFramesCount();
 	uint8_t GetChannels() { return wfx.nChannels;  }
 	uint8_t GetFrameSize() { return wfx.nBlockAlign; }
 	uint32_t GetSampleRate() { return wfx.nSamplesPerSec; }
@@ -42,11 +42,8 @@ public:
 		int32_t nDataSize = sizeof(typeT);
 		int32_t nOutputSize = nToRead / nDataSize;
 
-		std::unique_lock<std::mutex> lockPos(mtxBuffPos);
-		nBufferReadPos = (nBufferSize + (nBufferPos - nToRead)) % nBufferSize;
-		lockPos.unlock();
-
 		const std::lock_guard<std::mutex> lock(mtxBuffer);
+		nBufferReadPos = (nBufferSize + (nBufferPos - nToRead)) % nBufferSize;		
 
 		if (pBuffer == nullptr)
 			return;
@@ -54,7 +51,6 @@ public:
 		for (int i = 0; i < nOutputSize; i++)
 		{
 			typeT* sample = (typeT*)&pBuffer[nBufferReadPos];
-
 			pReadBuff[i] = *sample;
 
 			nBufferReadPos += nDataSize;
@@ -67,11 +63,10 @@ public:
 private:
 	WAVEFORMATEX wfx;
 	BYTE* pBuffer = nullptr;
-	uint32_t nBufferPos = 0;
-	uint32_t nBufferSize = 0;
-	std::atomic<std::uint32_t> numFrames = 0;
+	int32_t nBufferPos = 0;
+	int32_t nBufferSize = 0;
+	std::atomic<std::int32_t> numFrames = 0;
 	std::mutex mtxBuffer;
-	std::mutex mtxBuffPos;
 
 	Wave wavFile;
 };
