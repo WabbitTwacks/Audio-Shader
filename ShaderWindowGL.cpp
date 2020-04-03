@@ -59,8 +59,24 @@ ShaderWindowGL::ShaderWindowGL(wxWindow* parent, int *args)
     //SetBackgroundStyle(wxBG_STYLE_CUSTOM);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
 
-    glGenTextures(1, &m_audioSampler);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    //glGenTextures(1, &m_audioSampler);
+    glGenTextures(1, &m_testImage);
+
+    wxInitAllImageHandlers();
+    wxImage testImage(wxT("./images/metal.jpg"), wxBITMAP_TYPE_JPEG);
+
+    glActiveTexture(GL_TEXTURE0);
+    //glBindTexture(GL_TEXTURE_1D, m_audioSampler);
+    //glTexImage1D(GL_TEXTURE_1D, 0, GL_R32F, 512, 0, GL_RED, GL_FLOAT, data);
+    glBindTexture(GL_TEXTURE_2D, m_testImage);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 2048, 2048, 0, GL_RGB, GL_UNSIGNED_BYTE, testImage.GetData());
+    glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 ShaderWindowGL::~ShaderWindowGL()
@@ -94,13 +110,18 @@ void ShaderWindowGL::Render(wxTimerEvent& event)
     int iAudioLevelAvg = glGetUniformLocation(m_shaderProgram, "iAudioLevelAvg");
     int iAudioLevels = glGetUniformLocation(m_shaderProgram, "iAudioLevels");
     int iAudioData = glGetUniformLocation(m_shaderProgram, "iAudioData");
+    //int iTestImage = glGetUniformLocation(m_shaderProgram, "iTestImage");
     glUniformf(iTime, m_time);
     glUniform2f(iResolution, GetWidth(), GetHeight());
     glUniformf(iAudioLevelAvg, m_audioLevel);
     glUniform1fv(iAudioData, 512, m_audioData);
     //glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_1D, m_audioSampler);
-    glUniform1i(iAudioLevels, m_audioSampler);
+    //glBindTexture(GL_TEXTURE_1D, m_audioSampler);
+    //glEnable(GL_TEXTURE_2D);
+    
+    //glUniform1i(iTestImage, m_testImage);
+    //glUniform1i(iAudioLevels, m_audioSampler);
+    glBindTexture(GL_TEXTURE_2D, m_testImage);
 
     //background
     glColor4f(0.4, 0.1, 0.9, 1);
@@ -169,14 +190,39 @@ void ShaderWindowGL::SetShaderSource(wxString shaderSource)
 
 bool ShaderWindowGL::CompileShader()
 {
+    glDetachShader(m_shaderProgram, m_vertexShader);
     glDetachShader(m_shaderProgram, m_fragmentShader);
+    glDeleteShader(m_vertexShader);
     glDeleteShader(m_fragmentShader);
+
+    char* vertexSource = (char*)m_vertexShaderSource.c_str();
+    m_vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(m_vertexShader, 1, &vertexSource, NULL);
+    glCompileShader(m_vertexShader);
+
+    int success;
+    glGetShaderiv(m_vertexShader, GL_COMPILE_STATUS, &success);
+    if (!success)
+    {
+        int length = 0;
+        glGetShaderiv(m_vertexShader, GL_INFO_LOG_LENGTH, &length);
+        char* errorLog = new char[length];
+        glGetShaderInfoLog(m_vertexShader, length, NULL, errorLog);
+
+        //return to somewhere
+        OutputDebugString(L"ERROR::VERTEX SHADER COMPILATION\n");
+        OutputDebugStringA(errorLog);
+        OutputDebugString(L"\n");
+
+        delete[] errorLog;
+
+        return false;
+    }
 
     m_fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(m_fragmentShader, 1, &m_fragShaderSource, NULL);
     glCompileShader(m_fragmentShader);
 
-    int success;
     glGetShaderiv(m_fragmentShader, GL_COMPILE_STATUS, &success);
     if (!success)
     {
@@ -188,7 +234,7 @@ bool ShaderWindowGL::CompileShader()
         m_errorLog = errorLog;
 
         //return to somewhere
-        OutputDebugString(L"ERROR::SHADER COMPILATION\n");
+        OutputDebugString(L"ERROR::FRAGMENT SHADER COMPILATION\n");
         OutputDebugStringA(errorLog);
         OutputDebugString(L"\n");
 
@@ -198,6 +244,7 @@ bool ShaderWindowGL::CompileShader()
     }
 
     m_shaderProgram = glCreateProgram();
+    //glAttachShader(m_shaderProgram, m_vertexShader);
     glAttachShader(m_shaderProgram, m_fragmentShader);
     glLinkProgram(m_shaderProgram);
 
@@ -251,11 +298,10 @@ bool ShaderWindowGL::GenerateAudioSampler(float* data, int size)
     if (size < 512)
         return false;
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_1D, m_audioSampler);
-    glTexImage1D(GL_TEXTURE_1D, 0, GL_R32F, 512, 0, GL_RED, GL_FLOAT, data);
+    //glBindTexture(GL_TEXTURE_1D, m_audioSampler);
+    //glTexImage1D(GL_TEXTURE_1D, 0, GL_R32F, 512, 0, GL_RED, GL_FLOAT, data);
   
-    OutputDebugStringA(wxString::Format("%d\n", glGetError()));
+    //OutputDebugStringA(wxString::Format("%d\n", glGetError()));
 
     //glGenerateMipmap(GL_TEXTURE_1D);
 

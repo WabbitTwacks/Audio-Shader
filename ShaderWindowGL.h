@@ -20,9 +20,11 @@ class ShaderWindowGL : public wxGLCanvas
 	float m_time = 0; //time from shader start in seconds
 	float m_audioLevel = 0.0;
 	unsigned int m_audioSampler = 0;
+	unsigned int m_testImage = 0;
 	float* m_audioData = nullptr;
 
 	char* m_fragShaderSource = nullptr;
+	unsigned int m_vertexShader = 0;
 	unsigned int m_fragmentShader = 0;
 	unsigned int m_shaderProgram = 0;
 	wxString m_errorLog = "";
@@ -52,15 +54,15 @@ class ShaderWindowGL : public wxGLCanvas
 	PFNGLACTIVETEXTUREPROC glActiveTexture;
 	PFNGLUNIFORM1FVPROC glUniform1fv;
 
-	std::string m_vertexSource =
+	std::string m_vertexShaderSource =
 		"#version 330 core\n"
 		"layout (location = 0) in vec3 aPos;\n"
 		"layout (location = 1) in vec3 aColor;\n"
 		"layout (location = 2) in vec2 aTexCoord;\n\n"
-		"out vec2 TexCoord\n\n"
+		"out vec2 TexCoord;\n\n"
 		"void main(){\n"
-			"glPosition = ftransform();\n"
-			"gl_Texcoord[0] = gl_MultiTexCoord0;\n"
+			"//gl_Position = vec4(aPos, 1.0);\n"
+			"TexCoord = aTexCoord;\n"
 		"}\0";
 
 public:
