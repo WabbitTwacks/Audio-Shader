@@ -7,4 +7,4 @@ Currently for Windows only.
 
 To compile, you will need to install wxWidgets (a cross platform GUI Library,get it here: https://www.wxwidgets.org/downloads/). When installed, set an environment variable for the installation path to WXWIN
 
-![preview](images/preview1.png)
+![preview](images/preview1.gif)

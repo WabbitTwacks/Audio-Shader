@@ -20,8 +20,6 @@ class ShaderWindowGL : public wxGLCanvas
 	float m_time = 0; //time from shader start in seconds
 	float m_audioLevel = 0.0;
 	unsigned int m_audioSampler = 0;
-	unsigned int m_testImage = 0;
-	float* m_audioData = nullptr;
 
 	char* m_fragShaderSource = nullptr;
 	unsigned int m_vertexShader = 0;

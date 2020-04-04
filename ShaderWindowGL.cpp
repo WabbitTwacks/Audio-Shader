@@ -46,9 +46,6 @@ ShaderWindowGL::ShaderWindowGL(wxWindow* parent, int *args)
     glActiveTexture = (PFNGLACTIVETEXTUREPROC)wglGetProcAddress("glActiveTexture");
     glUniform1fv = (PFNGLUNIFORM1FVPROC)wglGetProcAddress("glUniform1fv");
 
-    m_audioData = new float[512];
-    memset(m_audioData, 0, sizeof(float) * 512);
-
     //bind Resized and Render Timer
     parent->Bind(wxEVT_SIZE, &ShaderWindowGL::Resized, this, wxID_ANY);
 
@@ -65,18 +62,18 @@ ShaderWindowGL::ShaderWindowGL(wxWindow* parent, int *args)
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    //glGenTextures(1, &m_audioSampler);
-    glGenTextures(1, &m_testImage);
+    glActiveTexture(GL_TEXTURE0);
+    glGenTextures(1, &m_audioSampler);
+    
+   /* glGenTextures(1, &m_testImage);
 
     wxInitAllImageHandlers();
     wxImage testImage(wxT("./images/metal.jpg"), wxBITMAP_TYPE_JPEG);
 
     glActiveTexture(GL_TEXTURE0);
-    //glBindTexture(GL_TEXTURE_1D, m_audioSampler);
-    //glTexImage1D(GL_TEXTURE_1D, 0, GL_R32F, 512, 0, GL_RED, GL_FLOAT, data);
     glBindTexture(GL_TEXTURE_2D, m_testImage);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 2048, 2048, 0, GL_RGB, GL_UNSIGNED_BYTE, testImage.GetData());
-    glGenerateMipmap(GL_TEXTURE_2D);
+    glGenerateMipmap(GL_TEXTURE_2D);*/
 }
 
 ShaderWindowGL::~ShaderWindowGL()
@@ -86,7 +83,6 @@ ShaderWindowGL::~ShaderWindowGL()
 
     delete m_context;
     delete m_fragShaderSource;
-    delete m_audioData;
 }
 
 void ShaderWindowGL::Render(wxTimerEvent& event)
@@ -108,23 +104,16 @@ void ShaderWindowGL::Render(wxTimerEvent& event)
     int iTime = glGetUniformLocation(m_shaderProgram, "iTime");
     int iResolution = glGetUniformLocation(m_shaderProgram, "iResolution");
     int iAudioLevelAvg = glGetUniformLocation(m_shaderProgram, "iAudioLevelAvg");
-    int iAudioLevels = glGetUniformLocation(m_shaderProgram, "iAudioLevels");
-    int iAudioData = glGetUniformLocation(m_shaderProgram, "iAudioData");
-    //int iTestImage = glGetUniformLocation(m_shaderProgram, "iTestImage");
+    //int iAudioLevels = glGetUniformLocation(m_shaderProgram, "iAudioLevels");
+
     glUniformf(iTime, m_time);
     glUniform2f(iResolution, GetWidth(), GetHeight());
     glUniformf(iAudioLevelAvg, m_audioLevel);
-    glUniform1fv(iAudioData, 512, m_audioData);
-    //glActiveTexture(GL_TEXTURE0);
-    //glBindTexture(GL_TEXTURE_1D, m_audioSampler);
-    //glEnable(GL_TEXTURE_2D);
-    
-    //glUniform1i(iTestImage, m_testImage);
-    //glUniform1i(iAudioLevels, m_audioSampler);
-    glBindTexture(GL_TEXTURE_2D, m_testImage);
+
+    glBindTexture(GL_TEXTURE_1D, m_audioSampler);
 
     //background
-    glColor4f(0.4, 0.1, 0.9, 1);
+    glColor4f(0.4f, 0.1f, 0.9f, 1.0f);
     glBegin(GL_QUADS);
         glVertex3f(0, 0, 0);
         glVertex3f(GetWidth(), 0, 0);
@@ -298,16 +287,19 @@ bool ShaderWindowGL::GenerateAudioSampler(float* data, int size)
     if (size < 512)
         return false;
 
-    //glBindTexture(GL_TEXTURE_1D, m_audioSampler);
-    //glTexImage1D(GL_TEXTURE_1D, 0, GL_R32F, 512, 0, GL_RED, GL_FLOAT, data);
-  
-    //OutputDebugStringA(wxString::Format("%d\n", glGetError()));
+    float* processedData = new float[size];
+    for (int i = 0; i < size; i++)
+    {
+        processedData[i] = data[i] * 0.5 + 0.5;
+    }
 
-    //glGenerateMipmap(GL_TEXTURE_1D);
+    glBindTexture(GL_TEXTURE_1D, m_audioSampler);
+    glTexImage1D(GL_TEXTURE_1D, 0, GL_R32F, 512, 0, GL_RED, GL_FLOAT, processedData);
+    glGenerateMipmap(GL_TEXTURE_1D);
 
-    delete[] m_audioData;
-    m_audioData = new float[512];
-    memcpy_s(m_audioData, 512*sizeof(float), data, 512*sizeof(float));
+    //OutputDebugStringA(wxString::Format("%d\n", glGetError()));       
+
+    delete[] processedData;
 
     return false;
 }

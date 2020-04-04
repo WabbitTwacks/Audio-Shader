@@ -22,9 +22,14 @@ void main()
 	level = (level - minLevel) * 1./(0. - minLevel); 
 
 	//draw a circle and animate it with the audio level
+	float ipl = texture(iAudioWave, UV.x/10.0+0.5).r; //get interpolated data
+	float nipl =  texelFetch(iAudioWave, int(gl_FragCoord.x/10.0+400.0), 0).r; //get non-interpolated data
+	vec2 uv = vec2(UV.x, UV.y + ipl - 0.5); 
+	//uv = vec2(UV.x, UV.y + nipl - 0.5);  //comment out for non-interpolated data
+
 	float r = .1 + .4 * level;
 	float blur = .01;	
-	float d = length(UV);
+	float d = length(uv);
 	d = 1. - smoothstep(r, r+blur, d);
 	
 	//mix the bright and dark color depending on the audio level
